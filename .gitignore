@@ -1,0 +1,89 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors/IDE
+.vscode/
+.idea/
+*.iml
+
+# Logs and caches
+*.log
+*.tmp
+.tmp/
+.cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+.venv/
+venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+.eggs/
+.coverage*
+.pytest_cache/
+.mypy_cache/
+.tox/
+
+# Django/Flask/FastAPI
+instance/
+*.sqlite3
+
+# Node / Tailwind
+node_modules/
+.npm/
+.pnpm-store/
+
+# Dart / Flutter
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-versions
+.metadata
+.melos_tool/
+**/build/
+# iOS
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework/
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/
+**/ios/Runner/GeneratedPluginRegistrant.*
+# Android
+**/android/.gradle/
+**/android/local.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+
+# Firebase
+.firebase/
+.firebaserc.local
+
+# Coverage / reports
+coverage/
+coverage.xml
+htmlcov/
+
+# Misc
+*.swp
+*.swo
+*.orig
+
+# Database dumps
+*.sql
+*.dump
+
+# Env files (do not commit secrets)
+.env
+.env.*
+*.key
+*.pem
