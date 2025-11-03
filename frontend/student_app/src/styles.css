@@ -1,0 +1,18 @@
+:root{--bg:#f5f7fb;--card:#fff;--accent:#f59e0b}
+html,body,#root{height:100%;margin:0}
+body{font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:#0f172a}
+.app{max-width:1100px;margin:28px auto;padding:18px;background:transparent}
+.page-header h1{color:var(--accent);margin:0}
+.card{padding:14px;background:var(--card);border-radius:8px;box-shadow:0 1px 3px rgba(2,6,23,0.06)}
+.events,.activity{list-style:none;padding:0;margin:0}
+.events li,.activity li{padding:8px 0;border-bottom:1px solid #eef2f7}
+.muted{color:#64748b}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.progress-list{list-style:none;padding:0;margin:0}
+.progress-list li{margin-bottom:12px}
+.progress-bar{height:10px;background:#e6eef9;border-radius:6px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;background:var(--accent);border-radius:6px}
+
+@media (max-width:700px){
+	.two-col{grid-template-columns:1fr}
+}
