@@ -1,59 +1,55 @@
 import React from 'react'
+import { NavLink, Route, Routes } from 'react-router-dom'
+import Dashboard from './pages/Dashboard'
+import Courses from './pages/Courses'
+import Assignments from './pages/Assignments'
+import Schedule from './pages/Schedule'
+import Wellbeing from './pages/Wellbeing'
 
-export default function App(){
-  const timetable = [
-    {time:'09:00', subject:'Mathematics'},
-    {time:'10:15', subject:'Science'},
-    {time:'11:30', subject:'English'},
-  ]
+const links = [
+  { path: '/', label: 'Overview' },
+  { path: '/courses', label: 'Courses' },
+  { path: '/assignments', label: 'Assignments' },
+  { path: '/schedule', label: 'Schedule' },
+  { path: '/wellbeing', label: 'Wellbeing' }
+]
 
-  const assignments = [
-    {id:1,title:'Math: Algebra worksheet', due:'2025-11-04'},
-    {id:2,title:'Science: Lab report', due:'2025-11-08'},
-  ]
-
-  const progress = [
-    {subject:'Math', percent:88},
-    {subject:'Science', percent:92},
-    {subject:'English', percent:78},
-  ]
-
+export default function App() {
   return (
-    <div className="app page-student">
-      <header className="page-header">
-        <div>
-          <h1>Student Dashboard</h1>
-          <p>Your timetable, assignments and progress at a glance.</p>
+    <div className="app student-console">
+      <header className="topbar">
+        <div className="brand">
+          <h1>Student Experience</h1>
+          <p>Track learning progress, manage assignments and stay ready for the week ahead.</p>
+        </div>
+        <div className="profile">
+          <div className="profile-name">Aarav Kumar</div>
+          <div className="profile-role">Grade 8 · Robotics Cohort</div>
         </div>
       </header>
 
-      <main>
-        <section className="card">
-          <h3>Today's Timetable</h3>
-          <ul className="events">
-            {timetable.map((t,i)=> <li key={i}><strong>{t.time}</strong> — {t.subject}</li>)}
-          </ul>
-        </section>
+      <nav className="tabs">
+        {links.map((link) => (
+          <NavLink
+            key={link.path}
+            to={link.path}
+            end={link.path === '/'}
+            className={({ isActive }) => (isActive ? 'tab tab-active' : 'tab')}
+          >
+            {link.label}
+          </NavLink>
+        ))}
+      </nav>
 
-        <section className="two-col">
-          <div className="card">
-            <h3>Assignments</h3>
-            <ul className="activity">
-              {assignments.map(a=> <li key={a.id}>{a.title} <span className="muted">(due {a.due})</span></li>)}
-            </ul>
-          </div>
-
-          <div className="card">
-            <h3>Progress</h3>
-            <ul className="progress-list">
-              {progress.map((p,i)=> (
-                <li key={i}><div className="progress-subject">{p.subject}</div>
-                  <div className="progress-bar"><div style={{width: p.percent + '%'}} className="progress-fill"/></div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
+      <main className="content">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/assignments" element={<Assignments />} />
+          <Route path="/schedule" element={<Schedule />} />
+          <Route path="/wellbeing" element={<Wellbeing />} />
+          <Route path="*" element={<Dashboard />} />
+        </Routes>
       </main>
     </div>
   )

@@ -5,13 +5,15 @@ import Features from './pages/Features'
 import Pricing from './pages/Pricing'
 import About from './pages/About'
 import Contact from './pages/Contact'
+import Portal from './pages/Portal'
 
 const navLinks = [
 	{ path: '/', label: 'Home' },
 	{ path: '/features', label: 'Features' },
 	{ path: '/pricing', label: 'Pricing' },
 	{ path: '/about', label: 'About' },
-	{ path: '/contact', label: 'Contact' }
+	{ path: '/contact', label: 'Contact' },
+	{ path: '/portal', label: 'Portal' }
 ]
 
 function Nav() {
@@ -39,7 +41,7 @@ function Nav() {
 							</NavLink>
 						))}
 					</div>
-					<NavLink to="/contact" className="btn btn-primary">Get Started</NavLink>
+					<NavLink to="/portal" className="btn btn-primary">Get Started</NavLink>
 				</div>
 			</div>
 		</nav>
@@ -68,6 +70,7 @@ export default function App() {
 					<Route path="/pricing" element={<Pricing />} />
 					<Route path="/about" element={<About />} />
 					<Route path="/contact" element={<Contact />} />
+					<Route path="/portal" element={<Portal />} />
 					<Route path="*" element={<Navigate to="/" replace />} />
 				</Routes>
 			</main>
