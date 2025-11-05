@@ -1,11 +1,17 @@
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
+
+// App base URLs (override with Vite env vars in homepage: VITE_ADMIN_URL, VITE_FACULTY_URL, VITE_STUDENT_URL)
+// Use localhost (not 127.0.0.1) for best compatibility on Windows where Vite may bind to IPv6 (::1)
+const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || 'http://localhost:5177'
+const FACULTY_URL = import.meta.env.VITE_FACULTY_URL || 'http://localhost:5175'
+const STUDENT_URL = import.meta.env.VITE_STUDENT_URL || 'http://localhost:5174'
 
 const DESTINATIONS = {
-  admin: '/admin',
-  faculty: '/faculty',
-  teacher: '/faculty',
-  staff: '/faculty',
-  student: '/student'
+  admin: ADMIN_URL,
+  faculty: FACULTY_URL,
+  teacher: FACULTY_URL,
+  staff: FACULTY_URL,
+  student: STUDENT_URL
 }
 
 const EMAIL_ROLE_MAP = {
@@ -13,6 +19,9 @@ const EMAIL_ROLE_MAP = {
   'teacher@gmail.com': 'faculty',
   'student@gmail.com': 'student'
 }
+
+const DEMO_PASSWORD = 'password'
+const PASSWORD_HINT = 'password (or the same as the email)'
 
 const experiences = [
   {
@@ -39,9 +48,9 @@ const experiences = [
 ]
 
 const demoCredentials = [
-  { role: 'Administrator', email: 'admin@gmail.com', destination: DESTINATIONS.admin },
-  { role: 'Faculty / Teacher', email: 'teacher@gmail.com', destination: DESTINATIONS.faculty },
-  { role: 'Student', email: 'student@gmail.com', destination: DESTINATIONS.student }
+  { role: 'Administrator', email: 'admin@gmail.com', password: PASSWORD_HINT, destination: DESTINATIONS.admin },
+  { role: 'Faculty / Teacher', email: 'teacher@gmail.com', password: PASSWORD_HINT, destination: DESTINATIONS.faculty },
+  { role: 'Student', email: 'student@gmail.com', password: PASSWORD_HINT, destination: DESTINATIONS.student }
 ]
 
 const resolveRole = (email) => {
@@ -57,22 +66,19 @@ const resolveRole = (email) => {
 
 export default function Portal() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState('idle')
-
-  const portalCards = useMemo(
-    () => experiences.filter((item) => Boolean(item.path)),
-    []
-  )
 
   const handleSubmit = (event) => {
     event.preventDefault()
     setMessage('')
 
     const trimmed = email.trim()
-    if (!trimmed) {
+    const pwd = password.trim()
+    if (!trimmed || !pwd) {
       setStatus('error')
-      setMessage('Enter your school email address to continue.')
+      setMessage('Enter your demo email and password to continue.')
       return
     }
 
@@ -80,6 +86,17 @@ export default function Portal() {
     if (!role) {
       setStatus('error')
       setMessage('We could not determine your access level from that address. Contact support for manual provisioning.')
+      return
+    }
+
+    // Demo auth: restrict to the three provided emails and a shared password
+    const normalizedEmail = trimmed.toLowerCase()
+    const expectedRole = EMAIL_ROLE_MAP[normalizedEmail]
+    const localPart = normalizedEmail.split('@')[0]
+    const validPassword = pwd === DEMO_PASSWORD || pwd.toLowerCase() === normalizedEmail || pwd.toLowerCase() === localPart
+    if (!expectedRole || !validPassword) {
+      setStatus('error')
+      setMessage('Invalid demo credentials. Use the emails listed below and the password shown.')
       return
     }
 
@@ -117,7 +134,7 @@ export default function Portal() {
             <ul className="credential-list">
               {demoCredentials.map((item) => (
                 <li key={item.email}>
-                  <span className="credential-role">{item.role}:</span> <code>{item.email}</code>
+                  <span className="credential-role">{item.role}:</span> <code>{item.email}</code> · pw: <code>{item.password}</code>
                 </li>
               ))}
             </ul>
@@ -130,6 +147,16 @@ export default function Portal() {
                 placeholder="you@school.edu"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+            </label>
+            <label>
+              <span>Password</span>
+              <input
+                type="password"
+                placeholder="Enter demo password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
                 required
               />
             </label>
@@ -158,23 +185,7 @@ export default function Portal() {
         </article>
       </section>
 
-      <section className="section container">
-        <h2>Available workspaces</h2>
-        <div className="portal-grid">
-          {portalCards.map((card) => (
-            <article key={card.id} className="card role-card">
-              <div className="badge neutral role-tag">{card.title.split(' ')[0]}</div>
-              <h3>{card.title}</h3>
-              <p className="muted small">{card.description}</p>
-              {card.path ? (
-                <a className="btn btn-ghost" href={card.path}>
-                  Open {card.title}
-                </a>
-              ) : null}
-            </article>
-          ))}
-        </div>
-      </section>
+      
     </div>
   )
 }
