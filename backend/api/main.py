@@ -1,16 +1,21 @@
 from fastapi import FastAPI
+from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routers.assignments import router as assignments_router
 from .routers.students import router as students_router
 from .routers.faculty import router as faculty_router
 from .routers.courses import router as courses_router
+from .routers.ai import router as ai_router
 
 app = FastAPI(
     title="AI-AGI Campus API",
     description="The central API for the AI-AGI Powered Educational Organization & Campus Control System.",
     version="0.1.0",
 )
+
+# Load environment variables from .env if present (local dev)
+load_dotenv()
 
 # CORS for local dev frontends
 origins = [
@@ -62,3 +67,4 @@ app.include_router(assignments_router)
 app.include_router(students_router)
 app.include_router(faculty_router)
 app.include_router(courses_router)
+app.include_router(ai_router)
