@@ -1,24 +1,25 @@
 import React from 'react'
 
 const milestones = [
-	{ year: '2022', event: 'Product incubation with three innovation-focused schools.' },
-	{ year: '2023', event: 'Launched AI copilots for administrators and faculty planning.' },
-	{ year: '2024', event: 'Expanded to 6 campuses across two countries with 20K daily active users.' },
-	{ year: '2025', event: 'Introduced predictive retention and wellness interventions.' }
+	{ year: 'Months 1–2', event: 'Research, requirements, and UI/UX design.' },
+	{ year: 'Months 3–5', event: 'Student module: AI tutor, study recs, attendance.' },
+	{ year: 'Months 6–8', event: 'Faculty/Admin: planning, timetable, fees scaffolding.' },
+	{ year: 'Months 9–11', event: 'AGI controller simulation and analytics.' },
+	{ year: 'Month 12', event: 'Integration, testing, deployment, documentation.' }
 ]
 
 const values = [
 	{
-		title: 'Education First',
-		description: 'We co-create with teachers, principals and support staff to solve real classroom and operational challenges.'
+		title: 'Academic Objective',
+		description: 'Demonstrate a working campus system using FOSS components with AI/AGI concepts.'
 	},
 	{
-		title: 'Responsible AI',
-		description: 'Transparent, bias-aware models with audit trails and regional data residency options.'
+		title: 'Constraints',
+		description: 'Use only free/open-source tools and services; keep scope appropriate for a 12-month capstone.'
 	},
 	{
-		title: 'Partner Mentality',
-		description: 'Dedicated success architects, implementation specialists and 24/7 support for each campus.'
+		title: 'Outcomes',
+		description: 'Functional portals, reproducible backend, and documentation suitable for assessment.'
 	}
 ]
 
@@ -26,10 +27,10 @@ export default function About() {
 	return (
 		<div className="page">
 			<section className="section container">
-				<h1 className="page-title">We help schools focus on what matters most</h1>
+				<h1 className="page-title">Project overview</h1>
 				<p className="muted large">
-					AI-AGI Campus is built by educators, engineers and operations leaders who have lived the complexity of
-					running modern schools. Our mission is to connect people, data and action so every learner thrives.
+					This is a college capstone project that integrates role-based portals with an AI/AGI reasoning layer and a
+					Python FastAPI backend. It is non-commercial and intended for academic evaluation.
 				</p>
 			</section>
 
@@ -56,13 +57,12 @@ export default function About() {
 
 			<section className="section container">
 				<div className="card partner-card">
-					<h2>Join our educator advisory council</h2>
+					<h2>Documentation</h2>
 					<p className="muted">
-						We collaborate with a global council of superintendents, technology directors and researchers to guide
-						our roadmap. Help shape the future of intelligent learning ecosystems.
+						See the repository docs for module descriptions, tech stack, and project status.
 					</p>
-					<a className="btn btn-primary" href="/contact">
-						Become an advisor
+					<a className="btn btn-primary" href="https://github.com/smnk-infotech/AI-AGI-Campus" target="_blank" rel="noreferrer">
+						Open GitHub Repo
 					</a>
 				</div>
 			</section>

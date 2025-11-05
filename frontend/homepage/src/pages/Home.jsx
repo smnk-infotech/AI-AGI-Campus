@@ -1,52 +1,46 @@
 import React from 'react'
 
 const heroStats = [
-	{ label: 'Students Supported', value: '1,248' },
-	{ label: 'Avg. Attendance', value: '92%' },
-	{ label: 'Teachers Empowered', value: '78' }
+	{ label: 'Modules', value: '4' },
+	{ label: 'Open-Source Tools', value: '12+' },
+	{ label: 'Timeline', value: '12 months' }
 ]
 
 const featureHighlights = [
 	{
-		title: 'Unified Control Center',
+		title: 'Student Module',
 		description:
-			'Attendance, grading, payroll, facility requests and AI-backed insights in one dashboard for every role.'
+			'AI Tutor (chat/voice/video), attendance with face recognition, progress tracking, and course workspaces.'
 	},
 	{
-		title: 'Automation Everywhere',
+		title: 'Faculty Module',
 		description:
-			'Automate approval workflows, timetable adjustments and progress nudges with intelligent rules backed by data.'
+			'Lesson planning assistant, assignment workflows, analytics, and schedule management.'
 	},
 	{
-		title: 'Always-On Communication',
+		title: 'Admin Module',
 		description:
-			'Announcements, messages and meeting scheduling flow seamlessly between parents, students and faculty.'
+			'Operations, finance, timetable automation, and central announcements for campus administration.'
 	},
 	{
-		title: 'Meaningful Analytics',
+		title: 'AGI Controller (Simulation)',
 		description:
-			'Forecast performance, spot at-risk students early and track interventions with executive-ready reports.'
+			'Multi-agent reasoning with LangChain/AutoGPT/CrewAI for planning and predictive analytics.'
 	}
 ]
 
 const stats = [
-	{ label: 'Campuses', value: '6' },
-	{ label: 'AI Playbooks', value: '14' },
-	{ label: 'Parent Satisfaction', value: '96%' },
-	{ label: 'Task Automation', value: '62%' }
+	{ label: 'Frontend Apps', value: '5' },
+	{ label: 'Backend', value: 'FastAPI' },
+	{ label: 'Databases', value: 'Firebase + PostgreSQL' },
+	{ label: 'AI/AGI', value: 'Hugging Face + LangChain' }
 ]
 
-const testimonials = [
-	{
-		quote:
-			'“AI-AGI Campus eliminated duplicate data entry across departments and shaved hours off weekly reporting.”',
-		author: 'Principal R. Sharma, Horizon STEM Academy'
-	},
-	{
-		quote:
-			'“The predictive analytics flagged students who needed attention and gave us ready-to-use response plans.”',
-		author: 'Dean L. Adeyemi, Global Scholars College'
-	}
+const projectNotes = [
+	'Non-commercial academic capstone built with free/open-source tools.',
+	'Focus: functional prototypes and architecture—not production services.',
+	'Role-based portals: Admin, Faculty, Student, Parent with shared backend.',
+	'Extensible: replace in-memory data with PostgreSQL using the provided models.'
 ]
 
 export default function Home() {
@@ -55,18 +49,14 @@ export default function Home() {
 			<section className="hero">
 				<div className="container hero-inner">
 					<div className="hero-content">
-						<h1>Modern school management with intelligent automation</h1>
+						<h1>AI + AGI powered campus system (college capstone)</h1>
 						<p className="lead">
-							A single, AI-assisted platform for administrators, faculty, parents and students. Streamline
-								attendance, learning workflows, communication and compliance in minutes.
+							An academic project demonstrating role-based portals (admin, faculty, student, parent), an AI tutor, and
+								a FastAPI backend using only free and open-source tools.
 						</p>
 						<div className="hero-ctas">
-							<a className="btn btn-primary" href="/contact">
-								Request a demo
-							</a>
-							<a className="btn btn-ghost" href="/features">
-								Explore features
-							</a>
+							<a className="btn btn-primary" href="/portal">Open Portal</a>
+							<a className="btn btn-ghost" href="/features">View modules</a>
 						</div>
 					</div>
 					<div className="hero-visual" aria-hidden>
@@ -113,14 +103,13 @@ export default function Home() {
 			</section>
 
 			<section className="section container">
-				<h2>Trusted by schools worldwide</h2>
-				<div className="testimonials">
-					{testimonials.map((item) => (
-						<blockquote key={item.author} className="card testimonial">
-							<p>{item.quote}</p>
-							<footer className="muted">{item.author}</footer>
-						</blockquote>
-					))}
+				<h2>About this project</h2>
+				<div className="card">
+					<ul className="list">
+						{projectNotes.map((note) => (
+							<li key={note}>{note}</li>
+						))}
+					</ul>
 				</div>
 			</section>
 		</>

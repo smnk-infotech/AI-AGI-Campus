@@ -98,16 +98,16 @@ export default function Portal() {
   return (
     <div className="page portal-page">
       <section className="section container">
-        <h1 className="page-title">Access your AI-AGI Campus console</h1>
+        <h1 className="page-title">Access the demo role portals</h1>
         <p className="muted large">
-          Use your verified school email address to jump directly into the workspace that matches your role. The system
-          will route administrators, faculty/staff, students, and parents to the right experience automatically.
+          This capstone includes role-based portals for Administrator, Faculty/Teacher, and Student. Use the demo
+          credentials shown below or your school-style email (e.g., admin@ / teacher@ / student@) to preview routing.
         </p>
       </section>
 
       <section className="section container portal-layout">
         <article className="card portal-form">
-          <h2>Quick login</h2>
+          <h2>Quick login (demo)</h2>
           <p className="muted small">
             We look for role keywords inside the email address (for example <code>admin@</code>, <code>student@</code>,
             or <code>faculty@</code>). Adjust the destinations below to match your deployment URLs.
@@ -143,8 +143,8 @@ export default function Portal() {
         <article className="card portal-help">
           <h2>Need to customise the routing?</h2>
           <p className="muted small">
-            Update the <code>DESTINATIONS</code> map in <code>Portal.jsx</code> to point to the production URLs for each
-            workspace. Example:
+            Update the <code>DESTINATIONS</code> map in <code>Portal.jsx</code> to point to your local or deployed URLs for
+            each portal. Example:
           </p>
           <pre className="portal-snippet">{`const DESTINATIONS = {
   admin: 'https://campus.example.com/admin',

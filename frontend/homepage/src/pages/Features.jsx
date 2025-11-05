@@ -2,57 +2,59 @@ import React from 'react'
 
 const solutionAreas = [
 	{
-		title: 'Administrative Acceleration',
+		title: 'Student Module',
 		points: [
-			'Role-based dashboards consolidate finance, HR, admissions and compliance KPIs.',
-			'Automated attendance reconciliation, payroll calculations and vendor payouts.',
-			'AI-driven anomaly detection flags budget variances and facilities issues early.'
+			'AI Tutor (chat/voice/video) and study recommendations',
+			'Assignments, schedule and wellbeing tracking',
+			'Attendance via face recognition (prototype)'
 		]
 	},
 	{
-		title: 'Teaching & Learning',
+		title: 'Faculty Module',
 		points: [
-			'Curriculum planners with prerequisite checks and drag-and-drop timetable authoring.',
-			'Assignment workflows connect LMS rubrics, auto-grading and student feedback loops.',
-			'Adaptive study plans recommend enrichment activities based on performance trends.'
+			'Lesson planning assistant and course management',
+			'Assignment creation and grading flows',
+			'Student analytics and advising tools'
 		]
 	},
 	{
-		title: 'Family Engagement',
+		title: 'Admin Module',
 		points: [
-			'Real-time student progress, attendance alerts and secure messaging in one mobile-ready portal.',
-			'Automated reminders for invoices, meetings and sign-offs, localized in 12 languages.',
-			'AI concierge surfaces FAQs, school policies and next best actions 24/7.'
+			'Timetable automation and announcements',
+			'Operations: fees/hostel/transport (scaffolded)',
+			'Campus-wide dashboards'
 		]
 	},
 	{
-		title: 'Insights & Compliance',
+		title: 'AGI Controller (Simulation)',
 		points: [
-			'Predict graduation readiness, intervention impact and resource utilization with ML models.',
-			'Export-ready compliance packages for district and ministry reporting standards.',
-			'Data lake connectors stream metrics into Power BI, Tableau and Looker studios.'
+			'LangChain + AutoGPT + CrewAI agents',
+			'Predictive risk flags and resource planning (prototype)',
+			'Extensible multi-agent reasoning experiments'
 		]
 	}
 ]
 
 const integrations = [
-	'Google Workspace',
-	'Microsoft 365',
-	'Canvas',
-	'Moodle',
-	'PowerSchool',
-	'Slack',
-	'Zoom'
+	'React 18 + Vite',
+	'FastAPI (Python)',
+	'PostgreSQL',
+	'Firebase (Auth/Notifications)',
+	'LangChain / AutoGPT / CrewAI',
+	'Hugging Face Models',
+	'OpenCV / MediaPipe',
+	'Whisper.cpp',
+	'Coqui TTS'
 ]
 
 export default function Features() {
 	return (
 		<div className="page">
 			<section className="section container">
-				<h1 className="page-title">Features tailored to every department</h1>
+				<h1 className="page-title">Project modules and architecture</h1>
 				<p className="muted large">
-					AI-AGI Campus blends modern design, deep education expertise and automation so your teams can focus on
-					learning outcomes instead of repetitive tasks.
+					This college capstone demonstrates role-based portals, an AI/AGI layer, and a Python FastAPI backend using
+					only free/open-source tools.
 				</p>
 			</section>
 
@@ -70,10 +72,10 @@ export default function Features() {
 			</section>
 
 			<section className="section container">
-				<h2>Enterprise-grade integrations</h2>
+				<h2>Tech stack (free & open-source)</h2>
 				<p className="muted">
-					Plug into the systems your teams already rely on. Our open APIs and data lake exporters ensure your
-					records stay in sync.
+					The solution is assembled from popular, free/open-source libraries well-suited for academic work and rapid
+					prototyping.
 				</p>
 				<div className="tags">
 					{integrations.map((integration) => (
@@ -86,13 +88,9 @@ export default function Features() {
 
 			<section className="section container">
 				<div className="cta-panel card">
-					<h2>Give your school an intelligent command center</h2>
-					<p className="muted">
-						Schedule a guided tour with our education technologists to map AI-AGI Campus to your operating model.
-					</p>
-					<a className="btn btn-primary" href="/contact">
-						Talk to our team
-					</a>
+					<h2>Explore the live prototype</h2>
+					<p className="muted">Open the role portal and try the demo credentials described on the Portal page.</p>
+					<a className="btn btn-primary" href="/portal">Open Portal</a>
 				</div>
 			</section>
 		</div>
