@@ -5,11 +5,13 @@ import Courses from './pages/Courses'
 import Schedule from './pages/Schedule'
 import Advising from './pages/Advising'
 import Research from './pages/Research'
+import Assignments from './pages/Assignments'
 
 const links = [
   { path: '/', label: 'Dashboard' },
   { path: '/courses', label: 'Courses' },
   { path: '/schedule', label: 'Schedule' },
+  { path: '/assignments', label: 'Assignments' },
   { path: '/advising', label: 'Advising' },
   { path: '/research', label: 'Research & Development' }
 ]
@@ -48,6 +50,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/schedule" element={<Schedule />} />
+          <Route path="/assignments" element={<Assignments />} />
           <Route path="/advising" element={<Advising />} />
           <Route path="/research" element={<Research />} />
           <Route path="*" element={<Dashboard />} />

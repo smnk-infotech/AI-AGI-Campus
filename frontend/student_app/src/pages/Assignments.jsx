@@ -1,35 +1,55 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
-const upcomingAssignments = [
-  {
-    id: 1,
-    title: 'Algebra II Problem Set 4',
-    course: 'Mathematics',
-    due: 'Nov 6, 11:59 PM',
-    status: 'In Progress'
-  },
-  {
-    id: 2,
-    title: 'Robotics Lab Report',
-    course: 'Science',
-    due: 'Nov 8, 9:00 PM',
-    status: 'Drafting'
-  },
-  {
-    id: 3,
-    title: 'Literary Analysis Essay',
-    course: 'English',
-    due: 'Nov 16, 11:59 PM',
-    status: 'Not Started'
-  }
-]
-
-const completedAssignments = [
-  { id: 4, title: 'Physics Concept Map', course: 'Science', submitted: 'Oct 28', score: '92%' },
-  { id: 5, title: 'Vocabulary Quiz', course: 'English', submitted: 'Oct 30', score: '88%' }
-]
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8081'
 
 export default function Assignments() {
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      setError('')
+      try {
+        const res = await fetch(`${API_BASE}/api/assignments/`)
+        if (!res.ok) throw new Error(`Request failed: ${res.status}`)
+        const data = await res.json()
+        if (!cancelled) setItems(Array.isArray(data) ? data : [])
+      } catch (err) {
+        if (!cancelled) setError(err?.message || 'Failed to load assignments')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const now = new Date()
+  const { upcoming, past } = useMemo(() => {
+    const up = []
+    const pa = []
+    for (const a of items) {
+      const due = a?.due_date ? new Date(a.due_date) : null
+      const course = a?.course_id || 'Course'
+      const title = a?.title || 'Untitled assignment'
+      const id = a?.id || `${title}-${course}`
+      const display = {
+        id,
+        title,
+        course,
+        dueText: due ? due.toLocaleString() : 'TBD',
+      }
+      if (due && due < now) pa.push(display)
+      else up.push(display)
+    }
+    return { upcoming: up, past: pa }
+  }, [items])
+
   return (
     <div className="page">
       <section className="page-section">
@@ -37,34 +57,42 @@ export default function Assignments() {
           <header className="section-header">
             <h3>Upcoming</h3>
           </header>
-          <ul className="list">
-            {upcomingAssignments.map((item) => (
-              <li key={item.id}>
-                <div className="list-title">{item.title}</div>
-                <div className="list-sub">{item.course}</div>
-                <div className="muted small">Due {item.due}</div>
-                <span className="badge neutral">{item.status}</span>
-              </li>
-            ))}
-          </ul>
+          {loading && <div className="muted small">Loading assignments…</div>}
+          {error && !loading && <div className="muted small" style={{ color: 'var(--danger)' }}>{error}</div>}
+          {!loading && !error && (
+            <ul className="list">
+              {upcoming.map((item) => (
+                <li key={item.id}>
+                  <div className="list-title">{item.title}</div>
+                  <div className="list-sub">{item.course}</div>
+                  <div className="muted small">Due {item.dueText}</div>
+                  <span className="badge neutral">Open</span>
+                </li>
+              ))}
+              {upcoming.length === 0 && <li className="muted small">No upcoming assignments.</li>}
+            </ul>
+          )}
         </article>
       </section>
 
       <section className="page-section">
         <article className="card">
           <header className="section-header">
-            <h3>Recently Submitted</h3>
+            <h3>Recently Closed</h3>
           </header>
-          <ul className="list">
-            {completedAssignments.map((item) => (
-              <li key={item.id}>
-                <div className="list-title">{item.title}</div>
-                <div className="list-sub">{item.course}</div>
-                <div className="muted tiny">Submitted {item.submitted}</div>
-                <span className="badge success">Score {item.score}</span>
-              </li>
-            ))}
-          </ul>
+          {!loading && !error && (
+            <ul className="list">
+              {past.map((item) => (
+                <li key={item.id}>
+                  <div className="list-title">{item.title}</div>
+                  <div className="list-sub">{item.course}</div>
+                  <div className="muted tiny">Closed {item.dueText}</div>
+                  <span className="badge success">Completed</span>
+                </li>
+              ))}
+              {past.length === 0 && <li className="muted small">No recent assignments.</li>}
+            </ul>
+          )}
         </article>
       </section>
     </div>
