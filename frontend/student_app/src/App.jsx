@@ -5,6 +5,7 @@ import Courses from './pages/Courses'
 import Assignments from './pages/Assignments'
 import Schedule from './pages/Schedule'
 import Wellbeing from './pages/Wellbeing'
+import AIAssistant from './pages/AIAssistant'
 
 const links = [
   { path: '/', label: 'Overview' },
@@ -12,6 +13,7 @@ const links = [
   { path: '/assignments', label: 'Assignments' },
   { path: '/schedule', label: 'Schedule' },
   { path: '/wellbeing', label: 'Wellbeing' }
+  ,{ path: '/assistant', label: 'AI Assistant' }
 ]
 
 export default function App() {
@@ -48,6 +50,7 @@ export default function App() {
           <Route path="/assignments" element={<Assignments />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/wellbeing" element={<Wellbeing />} />
+          <Route path="/assistant" element={<AIAssistant />} />
           <Route path="*" element={<Dashboard />} />
         </Routes>
       </main>

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
+from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routers.assignments import router as assignments_router
@@ -14,8 +15,9 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Load environment variables from .env if present (local dev)
-load_dotenv()
+# Load environment variables from backend/api/.env if present (local dev)
+_env_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=str(_env_path), override=True)
 
 # CORS for local dev frontends
 origins = [
