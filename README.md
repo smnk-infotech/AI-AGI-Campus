@@ -1,179 +1,122 @@
-📘 AI + AGI Powered Educational Organization & Campus Control System
-📌 Overview
+# AI + AGI Powered Educational Organization & Campus Control System
 
+## 📌 Overview
 This project is a 1-year capstone project that aims to build a cost-free, AI + AGI-inspired platform for managing education and full campus administration.
-The system integrates AI tutoring, faculty assistance, and administrative automation into one intelligent solution. It is designed using free and open-source tools only.
-
-Key Features:
-
-Personalized AI tutor for students (chat, voice, video-based learning)
-
-Automated timetable, attendance (face recognition), and academic management
-
-Faculty assistance for lesson planning and student evaluation
-
-Full campus control: fees, hostel, transport, infrastructure, and security
-
-Predictive analytics for administrators (dropouts, performance trends, resources)
-
-AGI-inspired reasoning (multi-agent decision-making using LangChain, AutoGPT)
-
-🎯 Objectives
-
-Build a cross-platform system (Web, Mobile, Desktop) with Flutter.
-
-Integrate AI models for student learning & faculty support.
-
-Automate campus administration including academics, finance, and resources.
-
-Simulate AGI-level reasoning for smart decision-making.
-
-Use only free/open-source resources.
-
-🏫 Scope
-
-Suitable for schools, colleges, and universities.
-
-Scalable as a SaaS product.
-
-Modules: Student, Faculty, Admin, Campus Controller (AGI).
-
-Includes academic + non-academic campus operations.
-
-🏗️ System Architecture
-
-Layers:
-
-Frontend → Flutter (cross-platform app for Students, Faculty, Admins, Parents).
-
-Backend → Python (FastAPI/Django REST APIs).
-
-AI/AGI Layer → Hugging Face models, LangChain multi-agent reasoning, AutoGPT/CrewAI.
-
-Database → Firebase (auth, notifications), PostgreSQL (storage).
-
-🔹 Modules
-Student Module
-
-Personalized study recommendations
-
-AI Tutor (chat, voice, video explanations)
-
-Attendance with face recognition
-
-Notifications & progress tracking
-
-Faculty Module
-
-Lesson planning assistant
-
-AI-supported assignment checking
-
-Student progress analytics
-
-Admin Module
-
-Timetable automation
-
-Fees, hostel, transport, and resource management
-
-Centralized announcements & communication
-
-Campus Controller (AGI Simulation)
-
-Predictive analytics for dropouts & resource planning
-
-Multi-agent decision-making for campus policies
-
-Adaptive improvements
-
-🛠️ Tech Stack (All Free/Open Source)
-
-Frontend: Flutter, TailwindCSS
-
-Backend: Python (FastAPI/Django)
-
-Database: Firebase (Free tier), PostgreSQL
-
-AI/ML: Hugging Face (TinyLlama, Phi-2, Mistral, Gemma), llama.cpp, Ollama
-
-AGI Tools: LangChain, AutoGPT, CrewAI
-
-Vision: OpenCV, MediaPipe (face recognition)
-
-Voice/Video: YouTube API, Coqui TTS, Whisper.cpp
-
-Collaboration: GitHub Student Pack
-
-Hosting: Railway, Render, Vercel (Free tiers)
-
-📅 Project Timeline (12 Months)
-Phase	Months	Deliverables
-Phase 1	1–2	Research, requirements, UI/UX design
-Phase 2	3–5	Student Module: AI Tutor, Study Recs, Attendance
-Phase 3	6–8	Faculty/Admin: Planning, Timetable, Fees Mgmt
-Phase 4	9–11	Campus Control + AGI Controller
-Phase 5	12	Final Integration, Testing, Deployment, Documentation
-👥 Team Roles
-
-AI/AGI Research Lead → Hugging Face, LangChain, reasoning modules
-
-Backend Developer → Python APIs, database integration
-
-Frontend Developer → Flutter dashboards (student, faculty, admin)
-
-Vision/Integration Specialist → Face recognition, voice/video tutor, testing
-
-✅ Expected Outcomes
-
-Fully functional AI + AGI-powered campus system.
-
-Personalized AI tutor for students.
-
-Reduced faculty workload with automation.
-
-Campus-wide analytics & predictive insights.
-
-Research papers, patents, or startup incubation.
-
-📚 References
-
-Hugging Face: https://huggingface.co/
-
-LangChain: https://www.langchain.com/
-
-Firebase: https://firebase.google.com/
-
-OpenCV: https://opencv.org/
-
-Coqui TTS: https://coqui.ai/
-
-GitHub Student Pack: https://education.github.com/pack
-
-🚀 How to Contribute
-
-Fork this repo & clone locally
-
-Create a new branch (feature-module-name)
-
-Add your code and commit changes
-
-Push branch and create Pull Request
-
-Review & merge after approval
-
-📌 License
-
-This project is licensed under the MIT License – free for academic and research use.
-
-✅ This README is detailed enough for GitHub Copilot to understand your modules, tech stack, and development plan, so it can generate helpful code suggestions.
-
----
-
-Useful links:
-
-- Project Status: docs/PROJECT_STATUS.md
-- Contributing Guide: CONTRIBUTING.md
-- Code of Conduct: CODE_OF_CONDUCT.md
-- Security Policy: SECURITY.md
-- License: LICENSE
+The system integrates AI tutoring, faculty assistance, and administrative automation into one intelligent solution.
+
+## 🚀 Key Features
+
+### 🎓 Student Module
+- **AI Tutor & AGI Brain**: Personalized learning assistant powered by **Gemini 2.5 Flash** with Week-Ahead planning.
+- **Course Enrollment**: Browse and enroll in available courses.
+- **Assignment View**: Track assignments, due dates, and grades.
+- **Attendance**: Mark attendance using **Face Verification** via webcam.
+- **Secure Login**: JWT-based authentication protecting student data.
+
+### 👩‍🏫 Faculty Module
+- **Course Management**: Create and manage academic courses (e.g., "Robotics 101").
+- **Assignment Creation**: Issue assignments with descriptions and point values.
+- **Attendance Logging**: View student attendance records.
+
+### 🏢 Admin Module
+- **Dashboard**: Live campus statistics (Active Students, Staff, etc.).
+- **AGI Controller**: "Campus Brain" chat interface for policy analysis, strategic advice, and cross-module reasoning.
+
+## 🛠️ Tech Stack
+
+### Frontend (Monorepo)
+- **Framework**: React 18 + Vite
+- **Styling**: Vanilla CSS (Premium "Glassmorphism" Design)
+- **Apps**:
+    - `student_app` (Port 5174)
+    - `faculty_app` (Port 5175)
+    - `admin_app` (Port 5177)
+
+### Backend
+- **Framework**: Python FastAPI
+- **Database**: SQLite (Persistent `campus.db`)
+- **Authentication**: JWT (JSON Web Tokens) + PBKDF2 Password Hashing
+- **AI Integration**: Google Gemini API (`gemini-2.5-flash`) + Custom AGI Reasoning Engine
+- **Intelligence**: Goal-Oriented Multi-Agent Consensus System
+
+## ⚡ Quick Start
+
+### 1. Backend Setup
+```powershell
+# Navigate to backend API directory
+cd backend/api
+
+# Create/Activate Virtual Environment
+python -m venv .venv
+.venv\Scripts\activate
+
+# Install Dependencies
+pip install -r requirements.txt
+
+# Run Server (Port 8000)
+uvicorn backend.api.main:app --reload
+```
+
+### 2. Frontend Setup
+Open separate terminals for each app you want to run.
+
+**Student App**:
+```powershell
+cd frontend/student_app
+npm install
+npm run dev
+# Access at http://localhost:5174
+```
+*Login Creds: `aarav.kumar@student.edu` / `password123`*
+
+**Faculty App**:
+```powershell
+cd frontend/faculty_app
+npm install
+npm run dev
+# Access at http://localhost:5175
+```
+*Login Creds: `dr.gupta@faculty.edu` / `password123`*
+
+**Admin App**:
+```powershell
+cd frontend/admin_app
+npm install
+npm run dev
+# Access at http://localhost:5177
+```
+*Login Creds: `admin@campus.edu` / `admin123`*
+
+## 📂 Project Structure
+```
+root
+├── backend/
+│   └── api/          # FastAPI application
+│       ├── routers/  # API endpoints (auth, students, courses, ai)
+│       ├── models/   # Pydantic models
+│       └── main.py   # Entry point
+├── frontend/
+│   ├── student_app/  # Student React App
+│   ├── faculty_app/  # Faculty React App
+│   └── admin_app/    # Admin React App
+└── README.md         # This file
+```
+
+## ✅ Progress Check (Dec 2025)
+- [x] **Backend**: FastAPI running with SQLite Persistence.
+- [x] **Frontend**: All apps connected and styled.
+- [x] **Auth**: JWT Authentication implemented.
+- [x] **AI**: Gemini 2.5 Integration active.
+- [x] **Assignments**: Full creation/view loop working.
+- [x] **Courses**: Management and Enrollment features active.
+- [x] **Attendance**: Camera-based Face Verification active.
+- [x] **AGI**: Admin Chat Controller active.
+
+## 📌 License
+MIT License – Free for academic and research use.
+
+## 🧠 AGI "Smart Brain" Upgrade (Dec 2025)
+The system now features a **Goal-Oriented AGI Engine** (`backend/api/services/agi_engine.py`) that acts as a central brain.
+- **Memory**: Remembers user interactions across sessions (`agi_memory` table).
+- **Reasoning**: Simulates debates between "Student", "Faculty", and "Admin" internal agents before responding.
+- **Cross-Module Awareness**: Automatically fetches relevant data (Grades for Students, Workload for Faculty) to inform decisions.

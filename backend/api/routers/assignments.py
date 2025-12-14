@@ -1,82 +1,49 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
-from datetime import datetime, timedelta
 import uuid
+from sqlalchemy.orm import Session
+from datetime import datetime
 
 from ...models.assignment import Assignment
-
+from ..database import get_db
+from ..models_db import AssignmentDB
 
 router = APIRouter(prefix="/api/assignments", tags=["assignments"])
 
-
-# In-memory store (id -> Assignment)
-assignments_db: dict[str, Assignment] = {}
-
-
-def seed_assignments():
-    if assignments_db:
-        return
-    now = datetime.utcnow()
-    items = [
-        Assignment(
-            id=str(uuid.uuid4()),
-            title="Algebra II Problem Set 4",
-            course_id="MATH-201",
-            due_date=now + timedelta(days=2),
-            description="Complete exercises 5-20 on page 143.",
-            total_points=100,
-        ),
-        Assignment(
-            id=str(uuid.uuid4()),
-            title="Robotics Lab Report",
-            course_id="SCI-210",
-            due_date=now + timedelta(days=4),
-            description="Document your sensor calibration and line-following results.",
-            total_points=50,
-        ),
-        Assignment(
-            id=str(uuid.uuid4()),
-            title="Literary Analysis Essay",
-            course_id="ENG-150",
-            due_date=now + timedelta(days=10),
-            description="Analyze themes in the assigned short story.",
-            total_points=100,
-        ),
-    ]
-    for a in items:
-        assignments_db[a.id] = a
-
-
 @router.get("/", response_model=List[Assignment])
-def list_assignments():
-    seed_assignments()
-    return list(assignments_db.values())
-
+def list_assignments(db: Session = Depends(get_db)):
+    items = db.query(AssignmentDB).all()
+    # Manual mapping if needed, or rely on pydantic
+    return items
 
 @router.post("/", response_model=Assignment)
-def create_assignment(payload: Assignment):
-    assignments_db[payload.id] = payload
-    return payload
+def create_assignment(payload: Assignment, db: Session = Depends(get_db)):
+    if not payload.id:
+        payload.id = str(uuid.uuid4())
+    
+    # Store datetime as ISO format string for SQLite if needed, 
+    # or rely on SQLAlchemy TypeDecorator. For MVP, string is safest.
+    # Convert payload.due_date (datetime) to string
+    due_str = payload.due_date.isoformat() if isinstance(payload.due_date, datetime) else str(payload.due_date)
 
-
-@router.get("/{assignment_id}", response_model=Assignment)
-def get_assignment(assignment_id: str):
-    if assignment_id not in assignments_db:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-    return assignments_db[assignment_id]
-
-
-@router.put("/{assignment_id}", response_model=Assignment)
-def update_assignment(assignment_id: str, payload: Assignment):
-    if assignment_id not in assignments_db:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-    assignments_db[assignment_id] = payload
-    return payload
-
+    db_item = AssignmentDB(
+        id=payload.id,
+        title=payload.title,
+        course_id=payload.course_id,
+        due_date=due_str,
+        description=payload.description,
+        total_points=payload.total_points
+    )
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
 
 @router.delete("/{assignment_id}")
-def delete_assignment(assignment_id: str):
-    if assignment_id not in assignments_db:
+def delete_assignment(assignment_id: str, db: Session = Depends(get_db)):
+    item = db.query(AssignmentDB).filter(AssignmentDB.id == assignment_id).first()
+    if not item:
         raise HTTPException(status_code=404, detail="Assignment not found")
-    del assignments_db[assignment_id]
+    db.delete(item)
+    db.commit()
     return {"ok": True}

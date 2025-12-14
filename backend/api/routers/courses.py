@@ -1,47 +1,68 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
+from pydantic import BaseModel
 import uuid
+from sqlalchemy.orm import Session
+from datetime import datetime
 
-from ...models.course import Course
-
+from ..database import get_db
+from ..models_db import CourseDB, EnrollmentDB
 
 router = APIRouter(prefix="/api/courses", tags=["courses"])
 
+class CourseCreate(BaseModel):
+    name: str
+    code: str
+    description: str | None = None
+    schedule: str | None = None
+    faculty_id: str | None = None
 
-courses_db: dict[str, Course] = {}
+class EnrollmentCreate(BaseModel):
+    student_id: str
 
+@router.get("/", response_model=List[dict])
+def list_courses(db: Session = Depends(get_db)):
+    # Simple list, could add response_model schema later
+    return db.query(CourseDB).all()
 
-@router.get("/", response_model=List[Course])
-def list_courses():
-    return list(courses_db.values())
+@router.post("/")
+def create_course(course: CourseCreate, db: Session = Depends(get_db)):
+    db_course = CourseDB(
+        id=str(uuid.uuid4()),
+        name=course.name,
+        code=course.code,
+        description=course.description,
+        schedule=course.schedule,
+        faculty_id=course.faculty_id
+    )
+    db.add(db_course)
+    db.commit()
+    return db_course
 
+@router.post("/{course_id}/enroll")
+def enroll_student(course_id: str, payload: EnrollmentCreate, db: Session = Depends(get_db)):
+    # Check if exists
+    exists = db.query(EnrollmentDB).filter(
+        EnrollmentDB.course_id == course_id,
+        EnrollmentDB.student_id == payload.student_id
+    ).first()
+    
+    if exists:
+        return {"message": "Already enrolled"}
 
-@router.post("/", response_model=Course)
-def create_course(payload: Course):
-    if not payload.id:
-        payload.id = str(uuid.uuid4())
-    courses_db[payload.id] = payload
-    return payload
+    enrollment = EnrollmentDB(
+        id=str(uuid.uuid4()),
+        course_id=course_id,
+        student_id=payload.student_id,
+        enrollment_date=datetime.utcnow().isoformat()
+    )
+    db.add(enrollment)
+    db.commit()
+    return {"message": "Enrolled successfully"}
 
-
-@router.get("/{course_id}", response_model=Course)
-def get_course(course_id: str):
-    if course_id not in courses_db:
-        raise HTTPException(status_code=404, detail="Course not found")
-    return courses_db[course_id]
-
-
-@router.put("/{course_id}", response_model=Course)
-def update_course(course_id: str, payload: Course):
-    if course_id not in courses_db:
-        raise HTTPException(status_code=404, detail="Course not found")
-    courses_db[course_id] = payload
-    return payload
-
-
-@router.delete("/{course_id}")
-def delete_course(course_id: str):
-    if course_id not in courses_db:
-        raise HTTPException(status_code=404, detail="Course not found")
-    del courses_db[course_id]
-    return {"ok": True}
+@router.get("/my/{student_id}")
+def my_courses(student_id: str, db: Session = Depends(get_db)):
+    # Join enrollments and courses
+    results = db.query(CourseDB).join(EnrollmentDB, CourseDB.id == EnrollmentDB.course_id)\
+                .filter(EnrollmentDB.student_id == student_id).all()
+    return results

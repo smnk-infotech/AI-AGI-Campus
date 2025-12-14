@@ -1,75 +1,69 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
-const courses = [
-  {
-    id: 1,
-    name: 'Physics - Mechanics',
-    code: 'PHY101',
-    section: 'A2',
-    room: 'Science A201',
-    modality: 'In-Person',
-    enrollment: 36,
-    ta: 'Jordan Lee'
-  },
-  {
-    id: 2,
-    name: 'Mathematics - Linear Algebra',
-    code: 'MTH240',
-    section: 'B1',
-    room: 'Math B102',
-    modality: 'Hybrid',
-    enrollment: 42,
-    ta: 'Emma Rodriguez'
-  },
-  {
-    id: 3,
-    name: 'Computer Science - Algorithms',
-    code: 'CSE330',
-    section: 'C3',
-    room: 'Innovation Lab 3',
-    modality: 'Online',
-    enrollment: 28,
-    ta: 'Priya Patel'
-  }
-]
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'
 
 export default function Courses() {
+  const [courses, setCourses] = useState([])
+
+  // Form State
+  const [name, setName] = useState('')
+  const [code, setCode] = useState('')
+  const [desc, setDesc] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function load() {
+    setLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/courses/`)
+      if (res.ok) {
+        const data = await res.json()
+        setCourses(data)
+      }
+    } catch (e) { console.error(e) }
+    finally { setLoading(false) }
+  }
+
+  useEffect(() => { load() }, [])
+
+  async function create() {
+    if (!name || !code) return
+    await fetch(`${API_BASE}/api/courses/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, code, description: desc, faculty_id: 'fac_1' })
+    })
+    setName(''); setCode(''); setDesc('')
+    load()
+  }
+
   return (
     <div className="page">
       <section className="page-section">
-        <div className="card">
-          <div className="table-responsive">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Course</th>
-                  <th>Code</th>
-                  <th>Section</th>
-                  <th>Room</th>
-                  <th>Modality</th>
-                  <th>Enrollment</th>
-                  <th>Teaching Assistant</th>
-                </tr>
-              </thead>
-              <tbody>
-                {courses.map((course) => (
-                  <tr key={course.id}>
-                    <td>
-                      <div className="table-primary">{course.name}</div>
-                    </td>
-                    <td>{course.code}</td>
-                    <td>{course.section}</td>
-                    <td>{course.room}</td>
-                    <td>
-                      <span className="badge neutral">{course.modality}</span>
-                    </td>
-                    <td>{course.enrollment}</td>
-                    <td>{course.ta}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <header className="section-header">
+          <h3>Manage Courses</h3>
+        </header>
+
+        <div className="card composer" style={{ marginBottom: 20 }}>
+          <h4>Add New Course</h4>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <input className="input" placeholder="Course Name (e.g. Intro to AI)" value={name} onChange={e => setName(e.target.value)} />
+            <input className="input" placeholder="Code (e.g. CS101)" value={code} onChange={e => setCode(e.target.value)} />
+            <input className="input" placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} style={{ flex: 1 }} />
+            <button className="btn btn-primary" onClick={create}>Create Course</button>
           </div>
+        </div>
+
+        <div className="card">
+          {loading && <div className="muted">Loading...</div>}
+          <ul className="list">
+            {courses.map(c => (
+              <li key={c.id}>
+                <div className="list-title">{c.name} <span className="badge">{c.code}</span></div>
+                <div className="muted small">{c.description}</div>
+              </li>
+            ))}
+            {!loading && courses.length === 0 && <div className="muted">No courses found.</div>}
+          </ul>
         </div>
       </section>
     </div>

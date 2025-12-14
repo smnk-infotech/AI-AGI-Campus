@@ -12,6 +12,7 @@ class Assignment(BaseModel):
     total_points: int = 100
 
     model_config = ConfigDict(
+        from_attributes=True,
         populate_by_name=True,
         json_schema_extra={
             "example": {

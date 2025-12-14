@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavLink, Route, Routes } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
 import Courses from './pages/Courses'
@@ -12,11 +12,61 @@ const links = [
   { path: '/courses', label: 'Courses' },
   { path: '/assignments', label: 'Assignments' },
   { path: '/schedule', label: 'Schedule' },
-  { path: '/wellbeing', label: 'Wellbeing' }
-  ,{ path: '/assistant', label: 'AI Assistant' }
+  { path: '/wellbeing', label: 'Wellbeing' },
+  { path: '/assistant', label: 'AI Assistant' },
+  { path: '/attendance', label: 'Attendance' }
 ]
 
+import Login from './pages/Login'
+import Attendance from './pages/Attendance'
+
 export default function App() {
+  const [token, setToken] = useState(localStorage.getItem('student_token'))
+  const [student, setStudent] = useState(null)
+
+  // Persist token
+  useEffect(() => {
+    if (token) localStorage.setItem('student_token', token)
+    else localStorage.removeItem('student_token')
+  }, [token])
+
+  useEffect(() => {
+    if (!token) return
+    const fetchStudent = async () => {
+      try {
+        // With real auth, use /api/auth/me. For now, we list students or decode token if needed.
+        // Assuming single user per demo or extracting ID from token payload (not implemented in frontend decode yet).
+        // Fallback to fetching first student for demo continuity until /me endpoint exists.
+        const res = await fetch('http://localhost:8000/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setStudent(data)
+        } else {
+          console.error("Failed to fetch student profile")
+          if (res.status === 401) {
+            setToken(null)
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch student", err)
+      }
+    }
+    fetchStudent()
+  }, [token])
+
+  if (!token) {
+    return <Login setToken={setToken} />
+  }
+
+  function logout() {
+    setToken(null)
+    setStudent(null)
+  }
+
   return (
     <div className="app student-console">
       <header className="topbar">
@@ -25,8 +75,9 @@ export default function App() {
           <p>Track learning progress, manage assignments and stay ready for the week ahead.</p>
         </div>
         <div className="profile">
-          <div className="profile-name">Aarav Kumar</div>
-          <div className="profile-role">Grade 8 · Robotics Cohort</div>
+          <div className="profile-name">{student ? `${student.first_name} ${student.last_name}` : 'Loading...'}</div>
+          <div className="profile-role">{student ? `Grade ${student.year} · ${student.major}` : 'Guest'}</div>
+          <button onClick={logout} className="btn-sm" style={{ marginLeft: 10 }}>Logout</button>
         </div>
       </header>
 
@@ -45,12 +96,13 @@ export default function App() {
 
       <main className="content">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Dashboard student={student} />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/assignments" element={<Assignments />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/wellbeing" element={<Wellbeing />} />
           <Route path="/assistant" element={<AIAssistant />} />
+          <Route path="/attendance" element={<Attendance />} />
           <Route path="*" element={<Dashboard />} />
         </Routes>
       </main>

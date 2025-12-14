@@ -1,13 +1,26 @@
 from fastapi import FastAPI
-from dotenv import load_dotenv
-from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
+from dotenv import load_dotenv
 
+# Load environment variables
+_env_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=str(_env_path), override=True)
+
+# Routers
+from .routers.auth import router as auth_router
+from .routers.courses import router as courses_router
 from .routers.assignments import router as assignments_router
+from .routers.attendance import router as attendance_router
 from .routers.students import router as students_router
 from .routers.faculty import router as faculty_router
-from .routers.courses import router as courses_router
+from .routers.admin import router as admin_router
 from .routers.ai import router as ai_router
+
+from .database import engine, Base
+
+# Create tables on startup
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="AI-AGI Campus API",
@@ -15,11 +28,9 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Load environment variables from backend/api/.env if present (local dev)
-_env_path = Path(__file__).parent / ".env"
-load_dotenv(dotenv_path=str(_env_path), override=True)
+# Environment variables loaded above
 
-# CORS for local dev frontends
+# CORS
 origins = [
     # Homepage
     "http://127.0.0.1:5173",
@@ -46,27 +57,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.get("/")
 async def root():
-    """
-    Root endpoint for the API.
-    Provides a welcome message and basic information about the API.
-    """
     return {"message": "Welcome to the AI-AGI Campus API!"}
-
 
 @app.get("/health")
 async def health_check():
-    """
-    Health check endpoint to confirm the API is running.
-    """
     return {"status": "ok"}
 
-
-# Routers
+# Register Routers
+app.include_router(auth_router)
+app.include_router(courses_router)
 app.include_router(assignments_router)
+app.include_router(attendance_router)
 app.include_router(students_router)
 app.include_router(faculty_router)
-app.include_router(courses_router)
+app.include_router(admin_router)
 app.include_router(ai_router)

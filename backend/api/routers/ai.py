@@ -35,31 +35,58 @@ def _get_client(model_preference: str | None = None):
         raise HTTPException(status_code=500, detail="google-generativeai package is not installed on the server")
     genai.configure(api_key=api_key)
     # Prefer explicitly set model; otherwise use a broadly available default
-    raw = model_preference or os.environ.get("GOOGLE_AI_MODEL", "gemini-2.0-flash-exp")
+    raw = model_preference or os.environ.get("GOOGLE_AI_MODEL", "gemini-2.5-flash")
     model_name = _normalize_model_name(raw)
     return genai.GenerativeModel(model_name)
 
 
+from ..services.agi_engine import agi_brain
+from ..database import get_db
+from sqlalchemy.orm import Session
+from fastapi import Depends
+
+class AGIRequest(BaseModel):
+    goal: str
+    module: str
+    context: dict
+    user_id: str | None = None
+    
+@router.post("/agi")
+async def agi_think(body: AGIRequest, db: Session = Depends(get_db)):
+    """
+    Endpoint for AGI Goal-Oriented Reasoning.
+    Example Goal: "Should we extend the assignment deadline?"
+    """
+    if not body.goal:
+        raise HTTPException(status_code=400, detail="goal is required")
+        
+    return agi_brain.think(
+        goal=body.goal,
+        context_data=body.context,
+        module=body.module,
+        db=db,
+        user_id=body.user_id
+    )
+
 @router.post("/chat", response_model=ChatResponse)
-async def chat(body: ChatRequest):
+async def chat(body: ChatRequest, db: Session = Depends(get_db)):
     prompt = body.prompt.strip() if body.prompt else ""
     if not prompt:
         raise HTTPException(status_code=400, detail="prompt is required")
 
     try:
+        # Use simple model for basic chat, but we could upgrade to AGI brain if needed.
+        # For now, keeping legacy chat behavior but standardizing error handling.
         model = _get_client(body.model)
-        # Construct final prompt with optional context
-        full_prompt = prompt
-        if body.context:
-            full_prompt = f"Context:\n{body.context}\n\nQuestion:\n{prompt}"
+        full_prompt = f"Context:\n{body.context}\n\nQuestion:\n{prompt}" if body.context else prompt
         result = model.generate_content(full_prompt)
-        text = (result.text or "").strip() if result else ""
-        if not text:
-            text = "(No response from model.)"
-        return ChatResponse(reply=text, model=getattr(model, "model_name", None) or (body.model or "models/gemini-2.0-flash-exp"))
-    except HTTPException:
-        raise
-    except Exception as e:  # pragma: no cover
+        text = (result.text or "").strip() if result else "(No response)"
+        
+        # Store interaction in AGI Memory (Simulate user ID for now, pending auth integration in chat)
+        # agi_brain.remember("public_user", "guest", "conversation", f"User: {prompt} | AI: {text}", db)
+        
+        return ChatResponse(reply=text, model="gemini-2.5-flash")
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI generation failed: {e}")
 
 
@@ -118,7 +145,7 @@ async def chat_messages(body: ChatMessagesRequest):
         text = (getattr(result, 'text', None) or '').strip()
         if not text:
             text = "(No response from model.)"
-        model_name = getattr(model, 'model_name', None) or (body.model or 'models/gemini-2.0-flash-exp')
+        model_name = getattr(model, 'model_name', None) or (body.model or 'models/gemini-2.5-flash')
         return ChatMessagesResponse(reply=text, model=model_name)
     except HTTPException:
         raise
@@ -281,7 +308,7 @@ Guidelines:
                 Resource(title=f"Khan Academy search: {topic}", url=f"https://www.khanacademy.org/search?page_search_query={quote_plus(topic)}"),
             ]
 
-        model_name = getattr(model, 'model_name', None) or (body.model or 'models/gemini-2.0-flash-exp')
+        model_name = getattr(model, 'model_name', None) or (body.model or 'models/gemini-2.5-flash')
         return TeachResponse(
             topic=topic,
             summary_md=str(data.get("summary_md") or f"## {topic}\n\nNo summary available."),

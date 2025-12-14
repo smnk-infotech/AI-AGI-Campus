@@ -3,3 +3,7 @@ uvicorn[standard]
 pydantic
 python-dotenv
 google-generativeai
+sqlalchemy
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
