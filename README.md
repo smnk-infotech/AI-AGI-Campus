@@ -17,27 +17,30 @@ The system integrates AI tutoring, faculty assistance, and administrative automa
 - **Course Management**: Create and manage academic courses (e.g., "Robotics 101").
 - **Assignment Creation**: Issue assignments with descriptions and point values.
 - **Attendance Logging**: View student attendance records.
+- **At-Risk Detection**: AGI automatically flags students with low attendance or grades.
 
 ### 🏢 Admin Module
 - **Dashboard**: Live campus statistics (Active Students, Staff, etc.).
-- **AGI Controller**: "Campus Brain" chat interface for policy analysis, strategic advice, and cross-module reasoning.
+- **AGI Controller ("God Mode")**: Interactive chat interface for policy analysis and strategic simulations.
+- **Global Pattern Detection**: AGI monitors campus-wide trends (e.g., "Attendance is dropping in CS Dept").
 
 ## 🛠️ Tech Stack
 
 ### Frontend (Monorepo)
 - **Framework**: React 18 + Vite
 - **Styling**: Vanilla CSS (Premium "Glassmorphism" Design)
+- **State Management**: React Hooks + Context
 - **Apps**:
     - `student_app` (Port 5174)
     - `faculty_app` (Port 5175)
     - `admin_app` (Port 5177)
 
 ### Backend
-- **Framework**: Python FastAPI
-- **Database**: SQLite (Persistent `campus.db`)
+- **Framework**: Python FastAPI (Async)
+- **Database**: SQLite (Persistent `campus.db` with SQLAlchemy)
 - **Authentication**: JWT (JSON Web Tokens) + PBKDF2 Password Hashing
-- **AI Integration**: Google Gemini API (`gemini-2.5-flash`) + Custom AGI Reasoning Engine
-- **Intelligence**: Goal-Oriented Multi-Agent Consensus System
+- **AI Integration**: Google Gemini API (`gemini-2.5-flash`)
+- **AGI Engine**: Custom `AGIBrain` service with Multi-Agent Reasoning.
 
 ## ⚡ Quick Start
 
@@ -89,28 +92,42 @@ npm run dev
 
 ## 📂 Project Structure
 ```
-root
+root/
 ├── backend/
-│   └── api/          # FastAPI application
-│       ├── routers/  # API endpoints (auth, students, courses, ai)
-│       ├── models/   # Pydantic models
-│       └── main.py   # Entry point
+│   └── api/
+│       ├── routers/          # API Endpoints
+│       │   ├── auth.py       # JWT & Login
+│       │   ├── ai.py         # Gemini & AGI Routes
+│       │   ├── students.py   # Student CRUD
+│       │   ├── faculty.py    # Faculty CRUD
+│       │   └── admin.py      # Admin Stats
+│       ├── services/
+│       │   └── agi_engine.py # 🧠 Core AGI Reasoning Logic
+│       ├── models_db.py      # SQLAlchemy Models (SQLite)
+│       ├── prompts.py        # System Identity (Prompts)
+│       ├── seed_db.py        # Database Population Script
+│       └── main.py           # FastAPI Entry Point
 ├── frontend/
-│   ├── student_app/  # Student React App
-│   ├── faculty_app/  # Faculty React App
-│   └── admin_app/    # Admin React App
-└── README.md         # This file
+│   ├── student_app/          # Port 5174
+│   │   └── src/pages/        # (Dashboard, Assignments, AI Assistant...)
+│   ├── faculty_app/          # Port 5175
+│   │   └── src/pages/        # (Dashboard, Courses, Research...)
+│   └── admin_app/            # Port 5177
+│       └── src/pages/        # (Dashboard, AGI Controller, Operations...)
+└── README.md
 ```
 
 ## ✅ Progress Check (Dec 2025)
 - [x] **Backend**: FastAPI running with SQLite Persistence.
 - [x] **Frontend**: All apps connected and styled.
 - [x] **Auth**: JWT Authentication implemented.
-- [x] **AI**: Gemini 2.5 Integration active.
 - [x] **Assignments**: Full creation/view loop working.
 - [x] **Courses**: Management and Enrollment features active.
 - [x] **Attendance**: Camera-based Face Verification active.
-- [x] **AGI**: Admin Chat Controller active.
+- [x] **AGI Features**:
+    - [x] Multi-Agent Debate System
+    - [x] Context Awareness (Grades, Assignments, Global Stats)
+    - [x] Admin "What-If" Simulator
 
 ## 📌 License
 MIT License – Free for academic and research use.
