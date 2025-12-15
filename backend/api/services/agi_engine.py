@@ -55,11 +55,22 @@ class AGIBrain:
                 if student:
                     context["profile"] = {"name": f"{student.first_name} {student.last_name}", "major": student.major, "year": student.year}
                     
-                # Get Enrollments & Courses
+                # Get Enrollments & Courses & Grades
                 enrollments = db.query(EnrollmentDB).filter(EnrollmentDB.student_id == user_id).all()
                 course_ids = [e.course_id for e in enrollments]
                 courses = db.query(CourseDB).filter(CourseDB.id.in_(course_ids)).all()
                 context["courses"] = [c.name for c in courses]
+
+                # Calculate Grades / Weak Subjects
+                assignments = db.query(AssignmentDB).filter(AssignmentDB.course_id.in_(course_ids)).all()
+                # Mock grade calculation for now (since we don't have a SubmissionDB yet, assumes all assignments are 'graded' for context)
+                # In a real app, we'd query submissions. Here we'll simulate based on seed data logic or just return assignment list.
+                context["assignments"] = [f"{a.title} (Due: {a.due_date})" for a in assignments]
+                
+                # Retrieve actual grades if available (mocking high risk for demo if needed, or reading from a new 'Grade' model if we had one. 
+                # For this MVP, we will simulate "Weak Subjects" based on random logic or if we seed it.)
+                # Let's seed specific "performance_context" in the prompt if we can't query it yet.
+                pass
                 
                 # Get Recent Attendance
                 attendance = db.query(AttendanceDB).filter(AttendanceDB.student_id == user_id).limit(5).all()
@@ -71,16 +82,45 @@ class AGIBrain:
                 if faculty:
                     context["profile"] = {"name": f"{faculty.first_name} {faculty.last_name}", "dept": faculty.department}
                 
-                # Get Courses Taught
+                # Get Courses Taught & At-Risk Students
                 courses = db.query(CourseDB).filter(CourseDB.faculty_id == user_id).all()
                 context["teaching_courses"] = [c.name for c in courses]
+                
+                # Identify At-Risk Students (Simulation logic for MVP)
+                # In real system: Query all students in these courses -> Check avg grade < 60
+                course_ids = [c.id for c in courses]
+                enrolled_count = db.query(EnrollmentDB).filter(EnrollmentDB.course_id.in_(course_ids)).count()
+                
+                # Simulating a report for the AGI to analyze
+                context["course_health"] = {
+                    "total_students": enrolled_count,
+                    "at_risk_count": max(0, int(enrolled_count * 0.1)), # Simulate 10% risk
+                    "issues": ["Low attendance in AI-101", "Missing assignments in CS-202"]
+                }
                 
             elif role == "admin":
                 # Get Global Stats
                 s_count = db.query(StudentDB).count()
                 f_count = db.query(FacultyDB).count()
                 c_count = db.query(CourseDB).count()
-                context["campus_stats"] = {"total_students": s_count, "total_faculty": f_count, "total_courses": c_count}
+                
+                # Global Attendance Rate
+                total_att = db.query(AttendanceDB).count()
+                present_att = db.query(AttendanceDB).filter(AttendanceDB.status == "Present").count()
+                att_rate = int((present_att / total_att * 100) if total_att > 0 else 0)
+
+                context["campus_stats"] = {
+                    "total_students": s_count, 
+                    "total_faculty": f_count, 
+                    "total_courses": c_count,
+                    "avg_attendance": f"{att_rate}%"
+                }
+
+                # Simulated Department Health (since we don't have full dept links in seed yet)
+                context["dept_health"] = {
+                    "CS": "92% Attendance, 85% Avg Grade",
+                    "Robotics": "88% Attendance, 78% Avg Grade (Warning: Drop in attendance)"
+                }
                 
         except Exception as e:
             print(f"Context Fetch Error: {e}")

@@ -1,5 +1,5 @@
 from backend.api.database import SessionLocal, engine, Base
-from backend.api.models_db import StudentDB, FacultyDB, AdminDB
+from backend.api.models_db import StudentDB, FacultyDB, AdminDB, CourseDB, EnrollmentDB, AssignmentDB
 from backend.api.auth import get_password_hash
 import uuid
 
@@ -49,6 +49,42 @@ def seed():
     )
     db.add(admin_user)
     
+    # ------------------ NEW CONTEXT ------------------
+    # Create Course
+    course = CourseDB(
+        id=str(uuid.uuid4()),
+        name="Artificial Intelligence 101",
+        description="Intro to AI",
+        faculty_id=faculty_user.id
+    )
+    db.add(course)
+
+    # Enroll Student
+    enrollment = EnrollmentDB(
+        id=str(uuid.uuid4()),
+        student_id=sample_student.id,
+        course_id=course.id
+    )
+    db.add(enrollment)
+    
+    # Create Mock Assignments
+    a1 = AssignmentDB(
+        id=str(uuid.uuid4()),
+        title="AI History Essay",
+        description="Write about Turing.",
+        due_date="2025-12-20",
+        course_id=course.id
+    )
+    a2 = AssignmentDB(
+        id=str(uuid.uuid4()),
+        title="Neural Net Lab",
+        description="Build a perceptron.",
+        due_date="2025-12-25",
+        course_id=course.id
+    )
+    db.add(a1)
+    db.add(a2)
+
     db.commit()
     print(f"Seeded student: {sample_student.first_name} {sample_student.last_name} (ID: {sample_student.id})")
     print(f"Seeded faculty: {faculty_user.first_name} {faculty_user.last_name}")

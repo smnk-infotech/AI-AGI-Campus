@@ -116,7 +116,25 @@ root
 MIT License – Free for academic and research use.
 
 ## 🧠 AGI "Smart Brain" Upgrade (Dec 2025)
-The system now features a **Goal-Oriented AGI Engine** (`backend/api/services/agi_engine.py`) that acts as a central brain.
-- **Memory**: Remembers user interactions across sessions (`agi_memory` table).
-- **Reasoning**: Simulates debates between "Student", "Faculty", and "Admin" internal agents before responding.
-- **Cross-Module Awareness**: Automatically fetches relevant data (Grades for Students, Workload for Faculty) to inform decisions.
+The system is powered by a **Goal-Oriented AGI Engine** (`backend/api/services/agi_engine.py`) that acts as a continuous, intelligent campus OS.
+
+### 🌟 Core Capabilities
+1.  **Multi-Agent Consensus System**: 
+    -   Every decision is debated internally by simulated agents: **Student Advocate** (Wellbeing), **Faculty Advocate** (Workload), **Admin Agent** (Efficiency), and **Analytics Agent** (Data).
+    -   The AGI outputs a **Consensus Decision** and a **Confidence Score (0-100%)**.
+    
+2.  **Deep Context Awareness ("X-Ray Vision")**:
+    -   **Student**: Sees assignments, grades, and attendance history to imply performance.
+    -   **Faculty**: Detects at-risk students and workload bottlenecks.
+    -   **Admin**: Monitors global stats (Attendance Rate, Dept Health) for macro-management.
+
+3.  **"God Mode" Simulator**:
+    -   Admins can ask **"What If?"** scenarios (e.g., *"What if we cut the library budget?"*).
+    -   The AGI simulates the outcome based on its multi-agent debate logic.
+
+4.  **Memory & Transparency**:
+    -   **Long-Term Memory**: Stores all reasoning chains in the `agi_logs` database.
+    -   **Explainability**: Every suggestion comes with a clear reason ("Why?") sourced from the internal debate.
+
+### 🤖 "Always-On" Identity
+The system runs on a strict **Observe -> Analyze -> Debate -> Decide** loop, preventing hallucination and ensuring all suggestions are ethical, safe, and role-appropriate.

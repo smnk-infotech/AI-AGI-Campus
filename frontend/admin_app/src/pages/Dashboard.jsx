@@ -77,35 +77,39 @@ export default function Dashboard() {
 function AGIWidget() {
   const [insight, setInsight] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [query, setQuery] = useState("")
+
+  const fetchAGI = async (customGoal = null) => {
+    setLoading(true)
+    try {
+      const res = await fetch('http://localhost:8000/api/ai/agi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goal: customGoal || "Analyze campus-wide operational patterns and suggest improvements.",
+          module: "admin",
+          context: {},
+          user_id: "admin-global"
+        })
+      })
+      const data = await res.json()
+      setInsight(data)
+    } catch (err) {
+      console.error("AGI Error", err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    // Admin is global, no specific user ID needed for basic stats context
-    const fetchAGI = async () => {
-      setLoading(true)
-      try {
-        const res = await fetch('http://localhost:8000/api/ai/agi', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            goal: "Analyze campus-wide operational patterns and suggest improvements.",
-            module: "admin",
-            context: {},
-            user_id: "admin-global" // Logical ID for context fetch
-          })
-        })
-        const data = await res.json()
-        setInsight(data)
-      } catch (err) {
-        console.error("AGI Error", err)
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchAGI()
   }, [])
 
-  if (loading) return <div className="p-4 muted">Campus Brain is analyzing...</div>
-  if (!insight) return null
+  const handleSimulate = (e) => {
+    e.preventDefault()
+    if (!query.trim()) return
+    fetchAGI(query)
+  }
 
   return (
     <div>
@@ -114,18 +118,48 @@ function AGIWidget() {
           🌐 AGI Campus Controller
         </h3>
       </div>
+
       <div className="p-4">
-        <div style={{ marginBottom: '15px' }}>
-          <strong>Strategic Analysis:</strong> <span className="muted">{insight.analysis}</span>
-        </div>
-        <div style={{ background: 'rgba(124,58,237,0.1)', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #7c3aed', marginBottom: '15px' }}>
-          <strong style={{ color: '#7c3aed' }}>Policy Recommendation:</strong>
-          <p style={{ marginTop: '5px', fontWeight: 500 }}>{insight.decision}</p>
-        </div>
-        <div>
-          <strong>Reasoning Log:</strong>
-          <p className="small muted mt-2" style={{ fontFamily: 'monospace' }}>{insight.explanation}</p>
-        </div>
+        {/* Simulation Input */}
+        <form onSubmit={handleSimulate} style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+          <input
+            type="text"
+            placeholder="Ask 'What If'..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ background: '#7c3aed', color: 'white', border: 'none', padding: '0 20px', borderRadius: '6px', cursor: 'pointer' }}
+          >
+            {loading ? 'Thinking...' : 'Simulate'}
+          </button>
+        </form>
+
+        {loading && <div className="muted text-center p-4">Running Multi-Agent Simulation...</div>}
+
+        {!loading && insight && (
+          <>
+            <div style={{ marginBottom: '15px' }}>
+              <strong>Strategic Analysis:</strong> <span className="muted">{insight.analysis}</span>
+            </div>
+            <div style={{ background: 'rgba(124,58,237,0.1)', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #7c3aed', marginBottom: '15px' }}>
+              <strong style={{ color: '#7c3aed' }}>Policy Recommendation:</strong>
+              <p style={{ marginTop: '5px', fontWeight: 500 }}>{insight.decision}</p>
+            </div>
+            <div>
+              <strong>Reasoning Log:</strong>
+              <p className="small muted mt-2" style={{ fontFamily: 'monospace' }}>{insight.explanation}</p>
+              {insight.confidence && (
+                <div style={{ marginTop: '5px', fontSize: '0.8em', color: insight.confidence > 80 ? 'green' : 'orange' }}>
+                  Confidence Score: {insight.confidence}%
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
