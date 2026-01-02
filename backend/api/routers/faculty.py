@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from ...models.faculty import Faculty
 from ..database import get_db
-from ..models_db import FacultyDB, CourseDB, EnrollmentDB
+from ..models_db import FacultyDB, CourseDB, EnrollmentDB, AssignmentDB
 
 router = APIRouter(prefix="/api/faculty", tags=["faculty"])
 
@@ -16,23 +16,29 @@ def get_faculty_dashboard(faculty_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Faculty not found")
 
     # Metrics
+    # Metrics
     courses = db.query(CourseDB).filter(CourseDB.faculty_id == faculty_id).all()
     courses_count = len(courses)
     
     students_reached = 0
+    course_ids = []
     for course in courses:
         count = db.query(EnrollmentDB).filter(EnrollmentDB.course_id == course.id).count()
         students_reached += count
+        course_ids.append(course.id)
 
-    # Mock avg rating
-    avg_rating = "4.7 / 5"
+    # Future: Query FeedbackDB for Avg Rating
+    # For now, we will randomise it slightly to show "liveness" or keep it static until we build that module.
+    # Let's count totals
+    
+    upcoming_sessions = 0 # No AdvisingDB yet
 
     return {
         "stats": [
             { "id": 1, "label": "Courses This Term", "value": str(courses_count), "detail": "Active" },
             { "id": 2, "label": "Students Reached", "value": str(students_reached), "detail": "Total Enrolled" },
-            { "id": 3, "label": "Avg. Course Rating", "value": avg_rating, "detail": "Student Feedback" },
-            { "id": 4, "label": "Upcoming Advising Sessions", "value": "6", "detail": "This Week" } # Mock
+            { "id": 3, "label": "Avg. Course Rating", "value": "4.8 / 5", "detail": "Student Feedback" },
+            { "id": 4, "label": "Total Assignments", "value": str(db.query(AssignmentDB).filter(AssignmentDB.course_id.in_(course_ids)).count() if course_ids else 0), "detail": "Created" }
         ],
         "research_highlights": [
             { "id": 1, "title": "AI Ethics Grant", "org": "NSF", "status": "In Review", "amount": "$250K" },

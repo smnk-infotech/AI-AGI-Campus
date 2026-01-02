@@ -51,6 +51,7 @@ class CourseDB(Base):
     description = Column(String, nullable=True)
     faculty_id = Column(String, nullable=True) # ID of faculty teaching it
     schedule = Column(String, nullable=True) # e.g. "Mon/Wed 10am"
+    credits = Column(Integer, default=3) # New field for credits
 
 class EnrollmentDB(Base):
     __tablename__ = "enrollments"
@@ -59,6 +60,7 @@ class EnrollmentDB(Base):
     student_id = Column(String, index=True)
     course_id = Column(String, index=True)
     enrollment_date = Column(String)
+    grade = Column(String, nullable=True) # e.g. "A", "B", "95" or float stored as string
 
 class AttendanceDB(Base):
     __tablename__ = "attendance"

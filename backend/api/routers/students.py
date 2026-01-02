@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from ...models.student import Student
 from ..database import get_db
-from ..models_db import StudentDB, EnrollmentDB, CourseDB
+from ..models_db import StudentDB, EnrollmentDB, CourseDB, AssignmentDB, AttendanceDB
 
 router = APIRouter(prefix="/api/students", tags=["students"])
 
@@ -17,33 +17,67 @@ def get_student_dashboard(student_id: str, db: Session = Depends(get_db)):
 
     # Get enrolled courses for schedule
     enrollments = db.query(EnrollmentDB).filter(EnrollmentDB.student_id == student_id).all()
-    courses = []
-    for enrollment in enrollments:
-        course = db.query(CourseDB).filter(CourseDB.id == enrollment.course_id).first()
-        if course:
-            courses.append(course)
+    courses_ids = [e.course_id for e in enrollments]
+    courses = db.query(CourseDB).filter(CourseDB.id.in_(courses_ids)).all()
 
-    # Simplified schedule/stats logic for demo
-    # In real app, would query specific schedule tables and grade tables
+    # 1. Schedule Logic
     schedule = []
-    for idx, c in enumerate(courses):
-        schedule.append({
-            "id": c.id,
-            "subject": c.name,
-            "time": c.schedule, # e.g. "Mon 9:00"
-            "location": "Room " + str(100 + idx) # Mock location
-        })
+    total_credits = 0
+    gpa_sum = 0.0
+    graded_count = 0
+    
+    # Map courses
+    course_map = {c.id: c for c in courses}
+    
+    for idx, e in enumerate(enrollments):
+        c = course_map.get(e.course_id)
+        if c:
+            # Schedule
+            schedule.append({
+                "id": c.id,
+                "subject": c.name,
+                "time": c.schedule or "TBD",
+                "location": f"Room {101 + idx}" # Keeping room mock as it's not in DB yet
+            })
+            # Credits
+            total_credits += (c.credits or 0)
+            
+            # GPA
+            if e.grade:
+                try:
+                    gpa_val = float(e.grade)
+                    gpa_sum += gpa_val
+                    graded_count += 1
+                except:
+                    pass
+
+    # 2. Stats Calculation
+    gpa = round(gpa_sum / graded_count, 2) if graded_count > 0 else 0.0
+    
+    # Attendance
+    total_att = db.query(AttendanceDB).filter(AttendanceDB.student_id == student_id).count()
+    present_att = db.query(AttendanceDB).filter(AttendanceDB.student_id == student_id, AttendanceDB.status == "Present").count()
+    att_rate = int((present_att / total_att * 100)) if total_att > 0 else 100
+
+    # 3. Alerts (Assignments)
+    alerts = []
+    # due_soon = db.query(AssignmentDB).filter(AssignmentDB.course_id.in_(courses_ids)).limit(2).all() # Simple logic
+    # Using python filtering for simplicity on small datasets
+    all_assignments = db.query(AssignmentDB).filter(AssignmentDB.course_id.in_(courses_ids)).all()
+    for a in all_assignments:
+        alerts.append({ "id": a.id, "title": f"Due: {a.title}", "type": "Assignment" })
+        
+    if not alerts:
+        alerts.append({ "id": "welcome", "title": "Welcome to the new term!", "type": "General" })
 
     return {
         "stats": [
-            { "id": 1, "label": 'GPA', "value": '4.0', "detail": 'Honors Track' }, # Mock
-            { "id": 2, "label": 'Attendance', "value": '95%', "detail": 'On Track' }, # Mock
-            { "id": 3, "label": 'Credits', "value": str(len(courses) * 3), "detail": f'{len(courses)} courses' }
+            { "id": 1, "label": 'GPA', "value": str(gpa), "detail": 'Calculated' },
+            { "id": 2, "label": 'Attendance', "value": f"{att_rate}%", "detail": f"{total_att} sessions" },
+            { "id": 3, "label": 'Credits', "value": str(total_credits), "detail": f'{len(courses)} courses' }
         ],
         "schedule": schedule,
-        "alerts": [
-            { "id": 1, "title": 'Welcome back to campus!', "type": 'General' }
-        ]
+        "alerts": alerts[:4]
     }
 
 @router.get("/", response_model=List[Student])
