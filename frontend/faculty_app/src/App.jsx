@@ -100,11 +100,11 @@ export default function App() {
       <main className="content">
         <Routes>
           <Route path="/" element={<Dashboard faculty={faculty} />} />
-          <Route path="/courses" element={<Courses />} />
+          <Route path="/courses" element={<Courses faculty={faculty} />} />
           <Route path="/schedule" element={<Schedule faculty={faculty} />} />
-          <Route path="/assignments" element={<Assignments />} />
-          <Route path="/advising" element={<Advising />} />
-          <Route path="/research" element={<Research />} />
+          <Route path="/assignments" element={<Assignments faculty={faculty} />} />
+          <Route path="/advising" element={<Advising faculty={faculty} />} />
+          <Route path="/research" element={<Research faculty={faculty} />} />
           <Route path="*" element={<Dashboard faculty={faculty} />} />
         </Routes>
       </main>

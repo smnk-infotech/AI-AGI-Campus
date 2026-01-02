@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'
 
-export default function Courses() {
+export default function Courses({ faculty }) {
   const [courses, setCourses] = useState([])
 
   // Form State
@@ -26,15 +26,17 @@ export default function Courses() {
   useEffect(() => { load() }, [])
 
   async function create() {
-    if (!name || !code) return
+    if (!name || !code || !faculty) return
     await fetch(`${API_BASE}/api/courses/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, code, description: desc, faculty_id: 'fac_1' })
+      body: JSON.stringify({ name, code, description: desc, faculty_id: faculty.id })
     })
     setName(''); setCode(''); setDesc('')
     load()
   }
+
+  if (!faculty) return <div className="page p-4">Loading faculty context...</div>
 
   return (
     <div className="page">

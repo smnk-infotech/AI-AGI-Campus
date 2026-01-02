@@ -2,14 +2,16 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'
 
-export default function Assignments() {
+export default function Assignments({ student }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [submittedIds, setSubmittedIds] = useState(new Set())
 
   useEffect(() => {
     let cancelled = false
     async function load() {
+      if (!student) return
       setLoading(true)
       setError('')
       try {
@@ -27,7 +29,13 @@ export default function Assignments() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [student])
+
+  function submit(id) {
+    if (confirm("Submit this assignment? (Simulation)")) {
+      setSubmittedIds(prev => new Set(prev).add(id))
+    }
+  }
 
   const now = new Date()
   const { upcoming, past } = useMemo(() => {
@@ -38,17 +46,20 @@ export default function Assignments() {
       const course = a?.course_id || 'Course'
       const title = a?.title || 'Untitled assignment'
       const id = a?.id || `${title}-${course}`
+      const userSubmitted = submittedIds.has(id)
+
       const display = {
         id,
         title,
         course,
         dueText: due ? due.toLocaleString() : 'TBD',
+        status: userSubmitted ? 'Submitted' : 'Open'
       }
       if (due && due < now) pa.push(display)
       else up.push(display)
     }
     return { upcoming: up, past: pa }
-  }, [items])
+  }, [items, submittedIds])
 
   return (
     <div className="page">
@@ -62,11 +73,19 @@ export default function Assignments() {
           {!loading && !error && (
             <ul className="list">
               {upcoming.map((item) => (
-                <li key={item.id}>
-                  <div className="list-title">{item.title}</div>
-                  <div className="list-sub">{item.course}</div>
-                  <div className="muted small">Due {item.dueText}</div>
-                  <span className="badge neutral">Open</span>
+                <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div className="list-title">{item.title}</div>
+                    <div className="list-sub">{item.course}</div>
+                    <div className="muted small">Due {item.dueText}</div>
+                  </div>
+                  <div>
+                    {item.status === 'Submitted' ? (
+                      <span className="badge success">Submitted</span>
+                    ) : (
+                      <button className="btn btn-primary btn-sm" onClick={() => submit(item.id)}>Submit</button>
+                    )}
+                  </div>
                 </li>
               ))}
               {upcoming.length === 0 && <li className="muted small">No upcoming assignments.</li>}

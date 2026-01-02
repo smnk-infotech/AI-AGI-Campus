@@ -70,7 +70,7 @@ export default function Research() {
         })
       })
       const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
+      setMessages(prev => [...prev, { role: 'assistant', content: data.reply, actions: data.actions }])
     } catch (e) {
       setMessages(prev => [...prev, { role: 'assistant', content: "Connection error. Please ensure the AI Neuro-Link is active." }])
     } finally {
@@ -153,10 +153,18 @@ export default function Research() {
                 whiteSpace: 'pre-wrap',
                 border: m.role === 'assistant' ? '1px solid var(--border)' : 'none'
               }}>
+                {/* Agent Actions Display */}
+                {m.actions && m.actions.length > 0 && (
+                  <div style={{ marginBottom: 8, fontSize: '0.8rem', color: m.role === 'user' ? '#eee' : '#666', opacity: 0.9, borderBottom: '1px solid rgba(0,0,0,0.1)', paddingBottom: 5 }}>
+                    {m.actions.map((act, idx) => (
+                      <div key={idx}>⚡ Used Tool: {act.tool}</div>
+                    ))}
+                  </div>
+                )}
                 {m.content}
               </div>
             ))}
-            {loading && <div className="muted small" style={{ marginLeft: 10 }}>Thinking...</div>}
+            {loading && <div className="muted small" style={{ marginLeft: 10 }}>Analyzing Research Databases...</div>}
             <div ref={chatEndRef} />
           </div>
 

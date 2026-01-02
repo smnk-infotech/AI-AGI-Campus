@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
 const goals = [
   { id: 1, title: 'Mindfulness Practice', progress: '4 of 6 sessions completed', status: 'On Track' },
@@ -10,7 +10,21 @@ const supportTeam = [
   { id: 2, name: 'Coach Amir Rahman', role: 'Athletics Mentor', focus: 'Strength & stamina' }
 ]
 
-export default function Wellbeing() {
+const quotes = [
+  "Believe you can and you're halfway there.",
+  "Your attitude determines your direction.",
+  "Focus on progress, not perfection.",
+  "Breathe. You've got this."
+]
+
+export default function Wellbeing({ student }) {
+  const [quote, setQuote] = useState(quotes[0])
+
+  useEffect(() => {
+    // Random quote on load
+    setQuote(quotes[Math.floor(Math.random() * quotes.length)])
+  }, [])
+
   return (
     <div className="page">
       <section className="page-section two-col">
@@ -31,6 +45,18 @@ export default function Wellbeing() {
 
         <article className="card">
           <header className="section-header">
+            <h3>Daily Inspiration</h3>
+          </header>
+          <div style={{ padding: '20px 0', fontSize: '1.2rem', fontStyle: 'italic', textAlign: 'center' }}>
+            "{quote}"
+          </div>
+          <div className="muted small text-center">Refresh for a new perspective.</div>
+        </article>
+      </section>
+
+      <section className="page-section two-col">
+        <article className="card">
+          <header className="section-header">
             <h3>Support Circle</h3>
           </header>
           <ul className="list">
@@ -43,17 +69,15 @@ export default function Wellbeing() {
             ))}
           </ul>
         </article>
-      </section>
 
-      <section className="page-section">
         <article className="card">
           <header className="section-header">
             <h3>Resources</h3>
           </header>
           <ul className="list">
-            <li>Guided breathing exercises playlist · 5 minutes.</li>
-            <li>After-school homework lab · Monday to Thursday · 4:00 - 5:30 PM.</li>
-            <li>Student wellbeing hotline: <strong>+1 (800) 555-1212</strong>.</li>
+            <li><a href="#" style={{ color: 'var(--primary)' }}>Guided breathing exercises</a> · 5 minutes</li>
+            <li><a href="#" style={{ color: 'var(--primary)' }}>After-school homework lab</a> · Mon-Thu</li>
+            <li>Student wellbeing hotline: <strong>+1 (800) 555-1212</strong></li>
           </ul>
         </article>
       </section>

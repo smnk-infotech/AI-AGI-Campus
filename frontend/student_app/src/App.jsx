@@ -97,13 +97,13 @@ export default function App() {
       <main className="content">
         <Routes>
           <Route path="/" element={<Dashboard student={student} />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/assignments" element={<Assignments />} />
+          <Route path="/courses" element={<Courses student={student} />} />
+          <Route path="/assignments" element={<Assignments student={student} />} />
           <Route path="/schedule" element={<Schedule student={student} />} />
-          <Route path="/wellbeing" element={<Wellbeing />} />
-          <Route path="/assistant" element={<AIAssistant />} />
-          <Route path="/attendance" element={<Attendance />} />
-          <Route path="*" element={<Dashboard />} />
+          <Route path="/wellbeing" element={<Wellbeing student={student} />} />
+          <Route path="/assistant" element={<AIAssistant student={student} />} />
+          <Route path="/attendance" element={<Attendance student={student} />} />
+          <Route path="*" element={<Dashboard student={student} />} />
         </Routes>
       </main>
     </div>

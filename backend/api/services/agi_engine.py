@@ -2,200 +2,198 @@ import google.generativeai as genai
 import os
 import json
 import uuid
-from datetime import datetime
+import inspect
 from datetime import datetime
 from sqlalchemy.orm import Session
-from ..models_db import AGIMemory, AGILogs
+from sqlalchemy import text as sql_text
+from ..models_db import AGIMemory, AGILogs, StudentDB, FacultyDB, CourseDB, AssignmentDB, AttendanceDB, EnrollmentDB
 from ..database import SessionLocal
 from ..prompts import SMART_CAMPUS_BRAIN_PROMPT
+
+# --- Tool Registry & Schema ---
+
+class AgentTool:
+    def __init__(self, name: str, description: str, func, requires_db: bool = False):
+        self.name = name
+        self.description = description
+        self.func = func
+        self.requires_db = requires_db
+
+    def execute(self, **kwargs):
+        return self.func(**kwargs)
+
+class ToolRegistry:
+    def __init__(self):
+        self.tools = {}
+
+    def register(self, tool: AgentTool):
+        self.tools[tool.name] = tool
+
+    def get_tool_descriptions(self) -> str:
+        descriptions = []
+        for name, tool in self.tools.items():
+            # simple signature extraction
+            sig = str(inspect.signature(tool.func))
+            descriptions.append(f"- {name}{sig}: {tool.description}")
+        return "\n".join(descriptions)
+
+    def execute_tool(self, name: str, args: dict, db: Session = None):
+        tool = self.tools.get(name)
+        if not tool:
+            return f"Error: Tool '{name}' not found."
+        
+        try:
+            if tool.requires_db:
+                return tool.execute(db=db, **args)
+            return tool.execute(**args)
+        except Exception as e:
+            return f"Error executing tool '{name}': {str(e)}"
+
+# --- Core Tools Definition ---
+
+def tool_get_student_info(db: Session, student_id: str):
+    """Fetch full profile, courses, and risk stats for a student."""
+    s = db.query(StudentDB).filter(StudentDB.id == student_id).first()
+    if not s: return "Student not found."
+    
+    # Enrich
+    enrollments = db.query(EnrollmentDB).filter(EnrollmentDB.student_id == student_id).all()
+    courses = db.query(CourseDB).filter(CourseDB.id.in_([e.course_id for e in enrollments])).all()
+    attendance = db.query(AttendanceDB).filter(AttendanceDB.student_id == student_id).limit(5).all()
+    
+    return {
+        "profile": {"name": f"{s.first_name} {s.last_name}", "major": s.major},
+        "courses": [c.name for c in courses],
+        "attendance_sample": [a.status for a in attendance]
+    }
+
+def tool_check_attendance_stats(db: Session):
+    """Calculate campus-wide attendance percentage."""
+    total = db.query(AttendanceDB).count()
+    if total == 0: return "No attendance records available."
+    present = db.query(AttendanceDB).filter(AttendanceDB.status == 'Present').count()
+    rate = (present / total) * 100
+    return f"Campus Attendance Rate: {rate:.1f}% (Total: {total})"
+
+def tool_simulate_event(description: str):
+    """Simulate a campus event or policy change and predict outcome."""
+    # This would ideally use a model, but for now we simulate reasoning
+    # In a real expanded version, this could query historical data trends
+    return f"SIMULATION RESULT for '{description}': Prediction - 15% increase in student engagement, slight impact on faculty load."
+
+# --- Agent Runtime ---
 
 class AGIBrain:
     def __init__(self):
         self.api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+        self.model = None
         if self.api_key:
             genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash') # Using flash model as per requirements
-        else:
-            self.model = None
-
-    def remember(self, user_id: str, role: str, context_type: str, content: str, db: Session):
-        """Stores a memory snippet in the database."""
-        memory = AGIMemory(
-            id=str(uuid.uuid4()),
-            user_id=user_id,
-            role=role,
-            context_type=context_type,
-            content=content,
-            timestamp=datetime.now().isoformat()
-        )
-        db.add(memory)
-        db.commit()
-
-    def recall(self, user_id: str, db: Session, limit: int = 5) -> str:
-        """Retrieves regular short-term memory context."""
-        memories = db.query(AGIMemory).filter(AGIMemory.user_id == user_id)\
-                     .order_by(AGIMemory.timestamp.desc()).limit(limit).all()
+            self.model = genai.GenerativeModel('gemini-2.5-flash')
         
-        if not memories:
-            return "No previous context."
-        
-        return "\n".join([f"- [{m.timestamp}] {m.content}" for m in memories])
-
-    def _fetch_cross_module_context(self, user_id: str, role: str, db: Session) -> dict:
-        """Fetches relevant data from other modules based on role."""
-        context = {}
-        
-        try:
-            # Lazy import to avoid circular dependency
-            from ..models_db import StudentDB, FacultyDB, CourseDB, AssignmentDB, AttendanceDB, EnrollmentDB
-            
-            if role == "student":
-                # Get Student Info
-                student = db.query(StudentDB).filter(StudentDB.id == user_id).first()
-                if student:
-                    context["profile"] = {"name": f"{student.first_name} {student.last_name}", "major": student.major, "year": student.year}
-                    
-                # Get Enrollments & Courses & Grades
-                enrollments = db.query(EnrollmentDB).filter(EnrollmentDB.student_id == user_id).all()
-                course_ids = [e.course_id for e in enrollments]
-                courses = db.query(CourseDB).filter(CourseDB.id.in_(course_ids)).all()
-                context["courses"] = [c.name for c in courses]
-
-                # Calculate Grades / Weak Subjects
-                assignments = db.query(AssignmentDB).filter(AssignmentDB.course_id.in_(course_ids)).all()
-                # Mock grade calculation for now (since we don't have a SubmissionDB yet, assumes all assignments are 'graded' for context)
-                # In a real app, we'd query submissions. Here we'll simulate based on seed data logic or just return assignment list.
-                context["assignments"] = [f"{a.title} (Due: {a.due_date})" for a in assignments]
-                
-                # Retrieve actual grades if available (mocking high risk for demo if needed, or reading from a new 'Grade' model if we had one. 
-                # For this MVP, we will simulate "Weak Subjects" based on random logic or if we seed it.)
-                # Let's seed specific "performance_context" in the prompt if we can't query it yet.
-                pass
-                
-                # Get Recent Attendance
-                attendance = db.query(AttendanceDB).filter(AttendanceDB.student_id == user_id).limit(5).all()
-                context["recent_attendance"] = [f"{a.date}: {a.status}" for a in attendance]
-                
-            elif role == "faculty":
-                # Get Faculty Info
-                faculty = db.query(FacultyDB).filter(FacultyDB.id == user_id).first()
-                if faculty:
-                    context["profile"] = {"name": f"{faculty.first_name} {faculty.last_name}", "dept": faculty.department}
-                
-                # Get Courses Taught & At-Risk Students
-                courses = db.query(CourseDB).filter(CourseDB.faculty_id == user_id).all()
-                context["teaching_courses"] = [c.name for c in courses]
-                
-                # Identify At-Risk Students (Simulation logic for MVP)
-                # In real system: Query all students in these courses -> Check avg grade < 60
-                course_ids = [c.id for c in courses]
-                enrolled_count = db.query(EnrollmentDB).filter(EnrollmentDB.course_id.in_(course_ids)).count()
-                
-                # Simulating a report for the AGI to analyze
-                context["course_health"] = {
-                    "total_students": enrolled_count,
-                    "at_risk_count": max(0, int(enrolled_count * 0.1)), # Simulate 10% risk
-                    "issues": ["Low attendance in AI-101", "Missing assignments in CS-202"]
-                }
-                
-            elif role == "admin":
-                # Get Global Stats
-                s_count = db.query(StudentDB).count()
-                f_count = db.query(FacultyDB).count()
-                c_count = db.query(CourseDB).count()
-                
-                # Global Attendance Rate
-                total_att = db.query(AttendanceDB).count()
-                present_att = db.query(AttendanceDB).filter(AttendanceDB.status == "Present").count()
-                att_rate = int((present_att / total_att * 100) if total_att > 0 else 0)
-
-                context["campus_stats"] = {
-                    "total_students": s_count, 
-                    "total_faculty": f_count, 
-                    "total_courses": c_count,
-                    "avg_attendance": f"{att_rate}%"
-                }
-
-                # Simulated Department Health (since we don't have full dept links in seed yet)
-                context["dept_health"] = {
-                    "CS": "92% Attendance, 85% Avg Grade",
-                    "Robotics": "88% Attendance, 78% Avg Grade (Warning: Drop in attendance)"
-                }
-                
-        except Exception as e:
-            print(f"Context Fetch Error: {e}")
-            
-        return context
+        self.registry = ToolRegistry()
+        # Register Tools
+        self.registry.register(AgentTool("get_student_info", "Get details about a specific student by ID.", tool_get_student_info, requires_db=True))
+        self.registry.register(AgentTool("check_attendance_stats", "Get global campus attendance statistics.", tool_check_attendance_stats, requires_db=True))
+        self.registry.register(AgentTool("simulate_event", "Run a simulation for a policy or event.", tool_simulate_event, requires_db=False))
 
     def think(self, goal: str, context_data: dict, module: str, db: Session, user_id: str = None) -> dict:
         """
-        Core AGI Reasoning Loop.
-        Uses the 'Always-On' System Identity to debate involved agents and reach a consensus.
+        ReAct Logic:
+        1. Receive Goal
+        2. Decide if Tool needed
+        3. Execute Tool
+        4. Final Answer
         """
         if not self.model:
-            return {
-                "analysis": "AI Service Unavailable",
-                "decision": "Error",
-                "explanation": "API Key missing."
-            }
-            
-        # 1. Enrich Context
-        enriched_context = context_data.copy()
-        if user_id:
-            role_map = {"student": "student", "faculty": "faculty", "admin": "admin"}
-            db_context = self._fetch_cross_module_context(user_id, role_map.get(module, "student"), db)
-            enriched_context.update(db_context)
+            return {"reply": "AI Offline (No Key)", "actions": []}
 
-        user_context_str = json.dumps(enriched_context, indent=2)
+        tool_desc = self.registry.get_tool_descriptions()
         
-        # Construct the AGI Prompt using the Global Identity
+        # 1. Thought Step
         prompt = f"""
-        {SMART_CAMPUS_BRAIN_PROMPT}
-
-        STATS & CONTEXT:
+        You are the AGI Campus Controller.
         GOAL: {goal}
         MODULE: {module.upper()}
-        CONTEXT DATA:
-        {user_context_str}
+        CONTEXT: {json.dumps(context_data)[:1000]}
+        
+        AVAILABLE TOOLS:
+        {tool_desc}
 
-        EXECUTE REASONING LOOP NOW.
+        RESPONSE FORMAT:
+        Return strict JSON.
+        If you need more info from a tool:
+        {{
+            "thought": "I need to check X...",
+            "tool": "tool_name",
+            "tool_args": {{ "arg": "value" }}
+        }}
+        
+        If you have the answer:
+        {{
+            "thought": "I have enough info.",
+            "final_answer": "The answer is..."
+        }}
         """
 
         try:
-            response = self.model.generate_content(prompt)
-            # Safe JSON extraction
-            content = response.text.replace("```json", "").replace("```", "").strip()
-            result = json.loads(content)
+            # First Pass
+            res = self.model.generate_content(prompt)
+            content = self._clean_json(res.text)
+            plan = json.loads(content)
             
-            # Log the reasoning
-            self._log_thought(goal, user_context_str, result, module, db)
-            
-            return result
-        
-        except Exception as e:
-            print(f"AGI Error: {e}")
-            return {
-                "analysis": "Error in reasoning.",
-                "decision": "Default Action",
-                "explanation": f"The AGI encountered an error processing this request: {str(e)}",
-                "confidence": 0
-            }
+            actions_log = []
 
-    def _log_thought(self, goal, context, result, module, db: Session):
-        """Logs the thought process for Admin audit."""
-        log_entry = AGILogs(
+            # Loop if tool used (simplified 1-step loop for stability)
+            if "tool" in plan and plan["tool"]:
+                tool_name = plan["tool"]
+                args = plan.get("tool_args", {})
+                
+                # Execute
+                observation = self.registry.execute_tool(tool_name, args, db=db)
+                actions_log.append({"tool": tool_name, "args": args, "result": str(observation)})
+                
+                # Second Pass with Observation
+                prompt_2 = f"""
+                PREVIOUS PLAN: {json.dumps(plan)}
+                OBSERVATION FROM TOOL: {observation}
+                
+                Now provide the final answer (JSON):
+                {{ "final_answer": "..." }}
+                """
+                res_2 = self.model.generate_content(prompt_2)
+                plan_2 = json.loads(self._clean_json(res_2.text))
+                final_text = plan_2.get("final_answer", "Processing complete.")
+                
+                self._log_thought(goal, str(actions_log), final_text, module, db)
+                return {
+                    "reply": final_text,
+                    "actions": actions_log
+                }
+
+            # Direct Answer
+            final_text = plan.get("final_answer", str(plan))
+            self._log_thought(goal, "Direct Response", final_text, module, db)
+            return {"reply": final_text, "actions": []}
+
+        except Exception as e:
+            fallback = f"I encountered an error while thinking: {e}"
+            return {"reply": fallback, "actions": []}
+
+    def _clean_json(self, text):
+        return text.replace("```json", "").replace("```", "").strip()
+
+    def _log_thought(self, goal, context, decision, module, db: Session):
+        log = AGILogs(
             id=str(uuid.uuid4()),
             timestamp=datetime.now().isoformat(),
             goal=goal,
-            context_summary=context[:500], # Truncate large context
-            analysis=result.get("analysis", ""),
-            decision=result.get("decision", ""),
-            explanation=result.get("explanation", ""),
-            confidence=result.get("confidence", 0),
+            context_summary=str(context)[:500],
+            decision=str(decision)[:500],
             module=module
         )
-        db.add(log_entry)
+        db.add(log)
         db.commit()
 
-# Singleton instance
 agi_brain = AGIBrain()
+

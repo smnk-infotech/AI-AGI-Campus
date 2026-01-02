@@ -20,7 +20,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     model: str
-
+    actions: list[dict] | None = None
 
 def _normalize_model_name(name: str) -> str:
     # google-generativeai often expects the 'models/' prefix
@@ -55,7 +55,7 @@ class AGIRequest(BaseModel):
 async def agi_think(body: AGIRequest, db: Session = Depends(get_db)):
     """
     Endpoint for AGI Goal-Oriented Reasoning.
-    Example Goal: "Should we extend the assignment deadline?"
+    Returns { "reply": str, "actions": [ {tool, args, result} ... ] }
     """
     if not body.goal:
         raise HTTPException(status_code=400, detail="goal is required")
@@ -107,58 +107,46 @@ class ChatMessagesRequest(BaseModel):
 class ChatMessagesResponse(BaseModel):
     reply: str
     model: str
-
-
-def _to_gemini_role(role: str) -> str:
-    r = (role or '').lower().strip()
-    if r == 'assistant':
-        return 'model'
-    # gemini supports 'user' and 'model'; map others to 'user'
-    return 'user'
-
+    actions: list[dict] | None = None
 
 @router.post("/messages", response_model=ChatMessagesResponse)
-async def chat_messages(body: ChatMessagesRequest):
+async def chat_messages(body: ChatMessagesRequest, db: Session = Depends(get_db)):
     if not body.messages or not isinstance(body.messages, list):
         raise HTTPException(status_code=400, detail="messages array is required")
 
     try:
-        model = _get_client(body.model)
-
-        # Build history from all but the last message; last should be the current user prompt
-        history = []
-        if len(body.messages) > 1:
-            for m in body.messages[:-1]:
-                content = (m.content or '').strip()
-                if not content:
-                    continue
-                history.append({
-                    'role': _to_gemini_role(m.role),
-                    'parts': [content]
-                })
-
         last = body.messages[-1]
         last_content = (last.content or '').strip()
         if not last_content:
             raise HTTPException(status_code=400, detail="last message has empty content")
 
-        # Start a chat session with history, then send the latest message
-        chat = model.start_chat(history=history)
-        result = chat.send_message(last_content)
-        text = (getattr(result, 'text', None) or '').strip()
-        if not text:
-            text = "(No response from model.)"
-        model_name = getattr(model, 'model_name', None) or (body.model or 'models/gemini-2.5-flash')
-        return ChatMessagesResponse(reply=text, model=model_name)
-    except HTTPException:
-        raise
+        # Use AGI Brain for full Tool capability
+        # Context building: Just pass history string for now as context
+        history = "\n".join([f"{m.role}: {m.content}" for m in body.messages[:-1]])
+        
+        result = agi_brain.think(
+            goal=last_content,
+            context_data={"chat_history": history},
+            module="student", # Default to student for general chat, or extract from somewhere if we had auth middleware
+            db=db,
+            user_id="public_simulation" # Placeholder until Auth allows explicit user mapping
+        )
+        
+        return ChatMessagesResponse(
+            reply=result.get("reply", "No reply."),
+            model="agi-gemini-2.5-flash",
+            actions=result.get("actions", [])
+        )
+
     except Exception as e:
+        print(f"AGI Chat Error: {e}")
         error_msg = str(e)
         if "403" in error_msg or "leaked" in error_msg.lower():
-            print(f"CRITICAL WARNING: API Key is invalid/leaked. Using Simulation Fallback. Error: {e}")
-            fallback_text = f"I am currently running in Simulation Mode because the API Key reported a security issue. \n\nYou said: '{last_content}'.\n\n(This is a verified system fallback to ensure UI functionality)."
-            return ChatMessagesResponse(reply=fallback_text, model="simulated-fallback")
-            
+             return ChatMessagesResponse(
+                 reply=f"Simulation Mode (Key Issue): {last_content}", 
+                 model="simulated-fallback",
+                 actions=[]
+             )
         raise HTTPException(status_code=500, detail=f"AI chat failed: {e}")
 
 

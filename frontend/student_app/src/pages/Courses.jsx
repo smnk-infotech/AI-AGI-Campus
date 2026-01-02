@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'
-const STUDENT_ID = "53576fbc-5bde-46ac-b4d7-48eeed9b5f126" // Seeded Aarav ID
 
-export default function Courses() {
+export default function Courses({ student }) {
   const [myCourses, setMyCourses] = useState([])
   const [allCourses, setAllCourses] = useState([])
   const [loading, setLoading] = useState(true)
 
   async function load() {
+    if (!student) return
     setLoading(true)
     try {
       const [my, all] = await Promise.all([
-        fetch(`${API_BASE}/api/courses/my/${STUDENT_ID}`).then(r => r.json()),
+        fetch(`${API_BASE}/api/courses/my/${student.id}`).then(r => r.json()),
         fetch(`${API_BASE}/api/courses/`).then(r => r.json())
       ])
       setMyCourses(my || [])
@@ -21,14 +21,15 @@ export default function Courses() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [student])
 
   async function enroll(courseId) {
+    if (!student) return
     try {
       const res = await fetch(`${API_BASE}/api/courses/${courseId}/enroll`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student_id: STUDENT_ID })
+        body: JSON.stringify({ student_id: student.id })
       })
       if (res.ok) {
         alert("Enrolled!")
@@ -42,6 +43,8 @@ export default function Courses() {
 
   // Filter out already enrolled courses from "Available"
   const available = allCourses.filter(c => !myCourses.find(m => m.id === c.id))
+
+  if (!student) return <div className="page p-4">Please log in to view courses.</div>
 
   return (
     <div className="page">

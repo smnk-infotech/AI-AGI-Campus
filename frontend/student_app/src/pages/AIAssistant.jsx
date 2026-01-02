@@ -37,6 +37,18 @@ function Message({ m, onCopy, onRegenerate }) {
     <div className={`row ${isUser ? 'user' : 'assistant'}`}>
       <div className="avatar">{isUser ? 'YOU' : 'AI'}</div>
       <div className="content">
+        {/* Agent Actions Display */}
+        {m.actions && m.actions.length > 0 && (
+          <div className="agent-actions" style={{ marginBottom: 8, fontSize: '0.85rem', color: '#888', borderLeft: '2px solid #3b82f6', paddingLeft: 8 }}>
+            {m.actions.map((act, i) => (
+              <div key={i} style={{ marginBottom: 4 }}>
+                <strong>⚡ Used Tool:</strong> <code>{act.tool}</code>
+                <br />
+                <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>Result: {act.result?.slice(0, 100)}...</span>
+              </div>
+            ))}
+          </div>
+        )}
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
       </div>
       {!isUser && (
@@ -108,7 +120,9 @@ export default function AIAssistant() {
       if (!res.ok) throw new Error(`Request failed: ${res.status}`)
       const data = await res.json()
       const reply = data.reply || '(No response)'
-      updateActive(c => ({ ...c, messages: [...c.messages, { role: 'assistant', content: reply }] }))
+      const actions = data.actions || [] // Capture actions
+
+      updateActive(c => ({ ...c, messages: [...c.messages, { role: 'assistant', content: reply, actions: actions }] }))
     } catch (e) {
       if (e.name !== 'AbortError') setError(e?.message || 'AI request failed')
     } finally {

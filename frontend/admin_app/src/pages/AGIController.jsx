@@ -18,16 +18,20 @@ export default function AGIController() {
         setLoading(true)
 
         try {
-            const res = await fetch(`${API_BASE}/api/ai/chat`, {
+            // Updated to use the Agent-aware /messages endpoint
+            const res = await fetch(`${API_BASE}/api/ai/messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: input,
-                    context: "You are an AGI Campus Controller for a futuristic university. You analyze data on student retention, budget allocation, and faculty performance. You provide strategic advice to the University Administrator. Be formal, data-driven, and visionary."
+                    messages: [
+                        { role: 'system', content: "You are an AGI Campus Controller. Analyze data, simulate policies, and provide strategic advice." },
+                        ...messages.map(m => ({ role: m.role === 'model' ? 'assistant' : 'user', content: m.text })),
+                        { role: 'user', content: input }
+                    ]
                 })
             })
             const data = await res.json()
-            setMessages(prev => [...prev, { role: 'model', text: data.reply }])
+            setMessages(prev => [...prev, { role: 'model', text: data.reply, actions: data.actions }])
         } catch (e) {
             setMessages(prev => [...prev, { role: 'model', text: 'System Error: Neural Link Disconnected.' }])
         } finally {
@@ -52,15 +56,26 @@ export default function AGIController() {
                         borderRadius: 12,
                         maxWidth: '80%'
                     }}>
+                        {/* Agent Actions Display */}
+                        {m.actions && m.actions.length > 0 && (
+                            <div style={{ marginBottom: 10, fontSize: '0.85rem', color: '#666', background: 'rgba(0,0,0,0.05)', padding: '5px 10px', borderRadius: 5 }}>
+                                {m.actions.map((act, idx) => (
+                                    <div key={idx} style={{ marginBottom: 5 }}>
+                                        <strong>⚙️ Running:</strong> <code>{act.tool}</code>
+                                        <div style={{ fontSize: '0.8em', opacity: 0.8 }}>Result: {act.result?.slice(0, 80)}...</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         <ReactMarkdown>{m.text}</ReactMarkdown>
                     </div>
                 ))}
-                {loading && <div className="muted small">Processing neural inputs...</div>}
+                {loading && <div className="muted small">Running AGI simulations...</div>}
             </div>
 
             <div style={{ marginTop: 15, display: 'flex', gap: 10 }}>
                 <input className="input" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Query the Campus Core..." style={{ flex: 1 }} />
-                <button className="btn btn-primary" onClick={send}>Execute</button>
+                <button className="btn btn-primary" onClick={send} disabled={loading}>Execute</button>
             </div>
         </div>
     )

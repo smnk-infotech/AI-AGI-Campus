@@ -38,9 +38,7 @@ def get_faculty_dashboard(faculty_id: str, db: Session = Depends(get_db)):
             { "id": 3, "label": "Avg. Course Rating", "value": avg_rating, "detail": "No Feedback" },
             { "id": 4, "label": "Total Assignments", "value": str(db.query(AssignmentDB).filter(AssignmentDB.course_id.in_(course_ids)).count() if course_ids else 0), "detail": "Created" }
         ],
-        "research_highlights": [
-            # Removed static mock data. accurate to DB state (Empty).
-        ],
+        "research_highlights": [],
         "notifications": [
             f"You have {courses_count} active courses managed this term.",
             f"Total {students_reached} students are currently enrolled.",
@@ -57,6 +55,30 @@ def get_faculty_dashboard(faculty_id: str, db: Session = Depends(get_db)):
             for c in courses
         ]
     }
+
+@router.get("/{faculty_id}/advisees")
+def get_faculty_advisees(faculty_id: str, db: Session = Depends(get_db)):
+    # Find all courses taught by this faculty
+    courses = db.query(CourseDB).filter(CourseDB.faculty_id == faculty_id).all()
+    course_ids = [c.id for c in courses]
+    
+    # Find all enrollments in these courses
+    enrollments = db.query(EnrollmentDB).filter(EnrollmentDB.course_id.in_(course_ids)).all()
+    student_ids = list(set([e.student_id for e in enrollments]))
+    
+    from ..models_db import StudentDB
+    students = db.query(StudentDB).filter(StudentDB.id.in_(student_ids)).all()
+    
+    return [
+        {
+            "id": s.id,
+            "name": f"{s.first_name} {s.last_name}",
+            "program": s.major,
+            "graduation": f"Year {s.year + 2}", # Approx
+            "email": s.email
+        }
+        for s in students
+    ]
 
 @router.get("/", response_model=List[Faculty])
 def list_faculty(db: Session = Depends(get_db)):
