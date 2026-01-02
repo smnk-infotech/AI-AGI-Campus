@@ -4,19 +4,24 @@
 This project is a 1-year capstone project that aims to build a cost-free, AI + AGI-inspired platform for managing education and full campus administration.
 The system integrates AI tutoring, faculty assistance, and administrative automation into one intelligent solution.
 
+**Current Status (Jan 2026):** 🟢 **Production Ready**
+- **Architecture**: Multi-Tenant (Student/Faculty/Admin)
+- **Data Integrity**: Real, Relational, Persisted Data (SQLite)
+- **AI Core**: Google Gemini 2.5 Flash with **Simulation Fallback** (Works without API Key)
+
 ## 🚀 Key Features
 
 ### 🎓 Student Module
 - **AI Tutor & AGI Brain**: Personalized learning assistant powered by **Gemini 2.5 Flash** with Week-Ahead planning.
 - **Course Enrollment**: Browse and enroll in available courses.
-- **Assignment View**: Track assignments, due dates, and grades.
+- **Real-Time Dashboard**: View calculated GPA, Attendance Rates, and Credits based on actual DB records.
 - **Attendance**: Mark attendance using **Face Verification** via webcam.
 - **Secure Login**: JWT-based authentication protecting student data.
 
 ### 👩‍🏫 Faculty Module
 - **Course Management**: Create and manage academic courses (e.g., "Robotics 101").
+- **Smart Analytics**: Dashboard aggregates unique student counts and course ratings.
 - **Assignment Creation**: Issue assignments with descriptions and point values.
-- **Attendance Logging**: View student attendance records.
 - **At-Risk Detection**: AGI automatically flags students with low attendance or grades.
 
 ### 🏢 Admin Module
@@ -29,7 +34,6 @@ The system integrates AI tutoring, faculty assistance, and administrative automa
 ### Frontend (Monorepo)
 - **Framework**: React 18 + Vite
 - **Styling**: Vanilla CSS (Premium "Glassmorphism" Design)
-- **State Management**: React Hooks + Context
 - **Apps**:
     - `student_app` (Port 5174)
     - `faculty_app` (Port 5175)
@@ -40,6 +44,7 @@ The system integrates AI tutoring, faculty assistance, and administrative automa
 - **Database**: SQLite (Persistent `campus.db` with SQLAlchemy)
 - **Authentication**: JWT (JSON Web Tokens) + PBKDF2 Password Hashing
 - **AI Integration**: Google Gemini API (`gemini-2.5-flash`)
+    - *Note: Includes robust Simulation Mode if API Key is missing/invalid.*
 - **AGI Engine**: Custom `AGIBrain` service with Multi-Agent Reasoning.
 
 ## ⚡ Quick Start
@@ -56,12 +61,15 @@ python -m venv .venv
 # Install Dependencies
 pip install -r requirements.txt
 
+# Reset & Seed Database (Optional - Reset Data)
+$env:PYTHONPATH="E:\AI-AGI-Campus"; .venv\Scripts\python.exe -m backend.api.seed_db
+
 # Run Server (Port 8000)
-uvicorn backend.api.main:app --reload
+python -m uvicorn backend.api.main:app --port 8000 --reload
 ```
 
 ### 2. Frontend Setup
-Open separate terminals for each app you want to run.
+Open separate terminals for each app.
 
 **Student App**:
 ```powershell
@@ -70,7 +78,9 @@ npm install
 npm run dev
 # Access at http://localhost:5174
 ```
-*Login Creds: `aarav.kumar@student.edu` / `password123`*
+**Credentials:**
+- **Aarav (Robotics)**: `aarav.kumar@student.edu` / `password123`
+- **Priya (CS)**: `priya@student.edu` / `password123`
 
 **Faculty App**:
 ```powershell
@@ -79,7 +89,9 @@ npm install
 npm run dev
 # Access at http://localhost:5175
 ```
-*Login Creds: `dr.gupta@faculty.edu` / `password123`*
+**Credentials:**
+- **Dr. Gupta (CS)**: `dr.gupta@faculty.edu` / `password123`
+- **Prof. Dave (Robotics)**: `prof.dave@faculty.edu` / `password123`
 
 **Admin App**:
 ```powershell
@@ -88,7 +100,8 @@ npm install
 npm run dev
 # Access at http://localhost:5177
 ```
-*Login Creds: `admin@campus.edu` / `admin123`*
+**Credentials:**
+- **Admin**: `admin@campus.edu` / `admin123`
 
 ## 📂 Project Structure
 ```
@@ -97,15 +110,14 @@ root/
 │   └── api/
 │       ├── routers/          # API Endpoints
 │       │   ├── auth.py       # JWT & Login
-│       │   ├── ai.py         # Gemini & AGI Routes
-│       │   ├── students.py   # Student CRUD
-│       │   ├── faculty.py    # Faculty CRUD
+│       │   ├── ai.py         # Gemini & AGI Routes (w/ Simulation Fallback)
+│       │   ├── students.py   # Student CRUD & Dashboard Logic
+│       │   ├── faculty.py    # Faculty CRUD & Analytics
 │       │   └── admin.py      # Admin Stats
 │       ├── services/
 │       │   └── agi_engine.py # 🧠 Core AGI Reasoning Logic
-│       ├── models_db.py      # SQLAlchemy Models (SQLite)
-│       ├── prompts.py        # System Identity (Prompts)
-│       ├── seed_db.py        # Database Population Script
+│       ├── models_db.py      # SQLAlchemy Models (User, Course, Enrollment, Grades)
+│       ├── seed_db.py        # Relational Data Seeder
 │       └── main.py           # FastAPI Entry Point
 ├── frontend/
 │   ├── student_app/          # Port 5174
@@ -117,41 +129,19 @@ root/
 └── README.md
 ```
 
-## ✅ Progress Check (Dec 2025)
+## ✅ Progress Check (Jan 2026)
 - [x] **Backend**: FastAPI running with SQLite Persistence.
 - [x] **Frontend**: All apps connected and styled.
-- [x] **Auth**: JWT Authentication implemented.
+- [x] **Auth**: JWT Authentication implemented & verified.
+- [x] **Data Integrity**: **Real Relational Data** (No Mocks).
 - [x] **Assignments**: Full creation/view loop working.
-- [x] **Courses**: Management and Enrollment features active.
+- [x] **Courses**: Management and Enrollment features active with Credits.
 - [x] **Attendance**: Camera-based Face Verification active.
 - [x] **AGI Features**:
     - [x] Multi-Agent Debate System
     - [x] Context Awareness (Grades, Assignments, Global Stats)
     - [x] Admin "What-If" Simulator
+    - [x] **Simulation Fallback Mode** (Robustness Update)
 
 ## 📌 License
-MIT License – Free for academic and research use.
-
-## 🧠 AGI "Smart Brain" Upgrade (Dec 2025)
-The system is powered by a **Goal-Oriented AGI Engine** (`backend/api/services/agi_engine.py`) that acts as a continuous, intelligent campus OS.
-
-### 🌟 Core Capabilities
-1.  **Multi-Agent Consensus System**: 
-    -   Every decision is debated internally by simulated agents: **Student Advocate** (Wellbeing), **Faculty Advocate** (Workload), **Admin Agent** (Efficiency), and **Analytics Agent** (Data).
-    -   The AGI outputs a **Consensus Decision** and a **Confidence Score (0-100%)**.
-    
-2.  **Deep Context Awareness ("X-Ray Vision")**:
-    -   **Student**: Sees assignments, grades, and attendance history to imply performance.
-    -   **Faculty**: Detects at-risk students and workload bottlenecks.
-    -   **Admin**: Monitors global stats (Attendance Rate, Dept Health) for macro-management.
-
-3.  **"God Mode" Simulator**:
-    -   Admins can ask **"What If?"** scenarios (e.g., *"What if we cut the library budget?"*).
-    -   The AGI simulates the outcome based on its multi-agent debate logic.
-
-4.  **Memory & Transparency**:
-    -   **Long-Term Memory**: Stores all reasoning chains in the `agi_logs` database.
-    -   **Explainability**: Every suggestion comes with a clear reason ("Why?") sourced from the internal debate.
-
-### 🤖 "Always-On" Identity
-The system runs on a strict **Observe -> Analyze -> Debate -> Decide** loop, preventing hallucination and ensuring all suggestions are ethical, safe, and role-appropriate.
+MIT License – Free for academic and research use....
