@@ -37,7 +37,7 @@ def get_student_dashboard(student_id: str, db: Session = Depends(get_db)):
                 "id": c.id,
                 "subject": c.name,
                 "time": c.schedule or "TBD",
-                "location": f"Room {101 + idx}" # Keeping room mock as it's not in DB yet
+                "location": c.location or "TBD"
             })
             # Credits
             total_credits += (c.credits or 0)

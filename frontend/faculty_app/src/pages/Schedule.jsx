@@ -1,54 +1,81 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
-const weeklySchedule = [
-  {
-    day: 'Monday',
-    sessions: [
-      { time: '09:00 - 10:15', title: 'PHY101 Lecture', location: 'Science A201' },
-      { time: '13:00 - 14:00', title: 'Office Hours', location: 'Faculty Hub 4' }
-    ]
-  },
-  {
-    day: 'Tuesday',
-    sessions: [
-      { time: '10:30 - 12:00', title: 'MTH240 Discussion', location: 'Math B102' },
-      { time: '15:00 - 16:00', title: 'Research Lab Sync', location: 'Innovation Lab' }
-    ]
-  },
-  {
-    day: 'Wednesday',
-    sessions: [
-      { time: '09:00 - 10:15', title: 'PHY101 Lecture', location: 'Science A201' },
-      { time: '11:00 - 12:30', title: 'CSE330 Workshop', location: 'Innovation Lab 3' }
-    ]
-  },
-  {
-    day: 'Thursday',
-    sessions: [
-      { time: '14:00 - 15:15', title: 'MTH240 Online', location: 'Virtual Classroom' }
-    ]
-  },
-  {
-    day: 'Friday',
-    sessions: [
-      { time: '09:30 - 11:00', title: 'Grant Planning', location: 'Research Commons' },
-      { time: '13:00 - 15:00', title: 'Capstone Reviews', location: 'Innovation Lab 1' }
-    ]
-  }
-]
+export default function Schedule({ faculty }) {
+  const [schedule, setSchedule] = useState([])
+  const [loading, setLoading] = useState(true)
 
-export default function Schedule() {
+  useEffect(() => {
+    if (!faculty) return
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/faculty/${faculty.id}/dashboard`)
+        if (res.ok) {
+          const data = await res.json()
+          const courses = data.courses || []
+
+          // Parse "Mon/Wed 10:00 AM" -> Mon: 10AM, Wed: 10AM
+          const daysMap = { 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday' }
+          const week = { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
+
+          courses.forEach(c => {
+            if (!c.schedule || c.schedule === 'TBD') return
+            // Split "Mon/Wed 10:00 AM" -> ["Mon/Wed", "10:00", "AM"]
+            const parts = c.schedule.split(' ')
+            if (parts.length < 2) return
+
+            const daysPart = parts[0] // Mon or Mon/Wed
+            const timePart = parts.slice(1).join(' ') // 10:00 AM
+
+            const days = daysPart.split('/')
+            days.forEach(d => {
+              const cleanDay = d.trim()
+              const fullDay = daysMap[cleanDay]
+              if (fullDay && week[fullDay]) {
+                week[fullDay].push({
+                  title: c.title,
+                  code: c.code,
+                  time: timePart,
+                  location: c.location || "TBD"
+                })
+              }
+            })
+          })
+
+          // Sort by time (simple filtered sort)
+          Object.keys(week).forEach(d => {
+            week[d].sort((a, b) => a.time.localeCompare(b.time))
+          })
+
+          const builtSchedule = Object.keys(week).map(d => ({
+            day: d,
+            sessions: week[d]
+          }))
+
+          setSchedule(builtSchedule)
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [faculty])
+
+  if (loading) return <div className="page"><div className="p-4">Loading schedule...</div></div>
+
   return (
     <div className="page">
       <section className="page-section grid-auto">
-        {weeklySchedule.map((day) => (
+        {schedule.map((day) => (
           <article key={day.day} className="card">
             <header className="section-header">
               <h3>{day.day}</h3>
             </header>
             <ul className="list">
-              {day.sessions.map((session) => (
-                <li key={session.title}>
+              {day.sessions.length === 0 && <li className="p-2 muted tiny">No classes</li>}
+              {day.sessions.map((session, idx) => (
+                <li key={`${day.day}-${idx}`}>
                   <div className="list-title">{session.title}</div>
                   <div className="list-sub">{session.time}</div>
                   <div className="muted small">{session.location}</div>

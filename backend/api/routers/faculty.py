@@ -28,26 +28,33 @@ def get_faculty_dashboard(faculty_id: str, db: Session = Depends(get_db)):
         course_ids.append(course.id)
 
     # Future: Query FeedbackDB for Avg Rating
-    # For now, we will randomise it slightly to show "liveness" or keep it static until we build that module.
-    # Let's count totals
-    
-    upcoming_sessions = 0 # No AdvisingDB yet
+    # Return "N/A" if no real feedback mechanism exists yet
+    avg_rating = "N/A"
 
     return {
         "stats": [
             { "id": 1, "label": "Courses This Term", "value": str(courses_count), "detail": "Active" },
             { "id": 2, "label": "Students Reached", "value": str(students_reached), "detail": "Total Enrolled" },
-            { "id": 3, "label": "Avg. Course Rating", "value": "4.8 / 5", "detail": "Student Feedback" },
+            { "id": 3, "label": "Avg. Course Rating", "value": avg_rating, "detail": "No Feedback" },
             { "id": 4, "label": "Total Assignments", "value": str(db.query(AssignmentDB).filter(AssignmentDB.course_id.in_(course_ids)).count() if course_ids else 0), "detail": "Created" }
         ],
         "research_highlights": [
-            { "id": 1, "title": "AI Ethics Grant", "org": "NSF", "status": "In Review", "amount": "$250K" },
-            { "id": 2, "title": "Robotics Journal Submission", "org": "IEEE", "status": "Revisions Due 11/12", "amount": "N/A" }
+            # Removed static mock data. accurate to DB state (Empty).
         ],
         "notifications": [
-            "Course evaluations window closes Nov 8.",
-            "Upload final project rubric to LMS by Friday.",
-            "Submit conference travel receipts for reimbursement."
+            f"You have {courses_count} active courses managed this term.",
+            f"Total {students_reached} students are currently enrolled.",
+            "Please check assignments for grading."
+        ],
+        "courses": [
+            {
+                "id": c.id,
+                "title": c.name,
+                "code": c.code,
+                "schedule": c.schedule,
+                "location": c.location
+            }
+            for c in courses
         ]
     }
 

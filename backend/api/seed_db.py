@@ -40,29 +40,29 @@ def seed():
     db.commit()
 
     # 4. COURSES
-    c_ai = CourseDB(id=str(uuid.uuid4()), name="Artificial Intelligence 101", code="CS-101", description="Intro to AI", faculty_id=fac_gupta.id, schedule="Mon/Wed 10:00 AM", credits=3)
-    c_robotics = CourseDB(id=str(uuid.uuid4()), name="Robotics Foundations", code="ROB-101", description="Basics of Robotics", faculty_id=fac_dave.id, schedule="Tue/Thu 2:00 PM", credits=4)
-    c_ethics = CourseDB(id=str(uuid.uuid4()), name="AI Ethics", code="PHI-200", description="Ethical AI", faculty_id=fac_gupta.id, schedule="Fri 1:00 PM", credits=2)
+    c1 = CourseDB(id=str(uuid.uuid4()), name="Artificial Intelligence 101", code="AI101", faculty_id=fac_gupta.id, schedule="Mon/Wed 10:00 AM", credits=3, location="Lab 304", fee=750)
+    c2 = CourseDB(id=str(uuid.uuid4()), name="Robotics Foundations", code="ROB101", faculty_id=fac_dave.id, schedule="Tue/Thu 2:00 PM", credits=4, location="Workshop A", fee=900)
+    c3 = CourseDB(id=str(uuid.uuid4()), name="AI Ethics", code="ETH200", faculty_id=fac_gupta.id, schedule="Fri 10:00 AM", credits=2, location="Seminar Hall", fee=400)
     
-    db.add_all([c_ai, c_robotics, c_ethics])
+    db.add_all([c1, c2, c3])
     db.commit()
 
     # 5. ENROLLMENTS & GRADES
     # Aarav takes AI (A) and Robotics (B+)
-    e1 = EnrollmentDB(id=str(uuid.uuid4()), student_id=s_aarav.id, course_id=c_ai.id, enrollment_date="2025-09-01", grade="4.0")
-    e2 = EnrollmentDB(id=str(uuid.uuid4()), student_id=s_aarav.id, course_id=c_robotics.id, enrollment_date="2025-09-01", grade="3.5")
+    e1 = EnrollmentDB(id=str(uuid.uuid4()), student_id=s_aarav.id, course_id=c1.id, enrollment_date="2025-09-01", grade="4.0")
+    e2 = EnrollmentDB(id=str(uuid.uuid4()), student_id=s_aarav.id, course_id=c2.id, enrollment_date="2025-09-01", grade="3.5")
     
     # Priya takes AI (B) and Ethics (A)
-    e3 = EnrollmentDB(id=str(uuid.uuid4()), student_id=s_priya.id, course_id=c_ai.id, enrollment_date="2025-09-01", grade="3.0")
-    e4 = EnrollmentDB(id=str(uuid.uuid4()), student_id=s_priya.id, course_id=c_ethics.id, enrollment_date="2025-09-01", grade="4.0")
+    e3 = EnrollmentDB(id=str(uuid.uuid4()), student_id=s_priya.id, course_id=c1.id, enrollment_date="2025-09-01", grade="3.0")
+    e4 = EnrollmentDB(id=str(uuid.uuid4()), student_id=s_priya.id, course_id=c3.id, enrollment_date="2025-09-01", grade="4.0")
     
     db.add_all([e1, e2, e3, e4])
 
     # 6. ASSIGNMENTS (For Alerts)
     # AI Assignment (Due soon)
-    a1 = AssignmentDB(id=str(uuid.uuid4()), title="Neural Net Essay", course_id=c_ai.id, due_date=(datetime.now() + timedelta(days=2)).isoformat(), description="Explain backprop.")
+    a1 = AssignmentDB(id=str(uuid.uuid4()), title="Neural Net Essay", course_id=c1.id, due_date=(datetime.now() + timedelta(days=2)).isoformat(), description="Explain backprop.")
     # Robotics Lab (Due later)
-    a2 = AssignmentDB(id=str(uuid.uuid4()), title="Build Servo Arm", course_id=c_robotics.id, due_date=(datetime.now() + timedelta(days=5)).isoformat(), description="Hardware lab.")
+    a2 = AssignmentDB(id=str(uuid.uuid4()), title="Build Servo Arm", course_id=c2.id, due_date=(datetime.now() + timedelta(days=5)).isoformat(), description="Hardware lab.")
     
     db.add_all([a1, a2])
 

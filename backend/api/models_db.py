@@ -51,7 +51,9 @@ class CourseDB(Base):
     description = Column(String, nullable=True)
     faculty_id = Column(String, nullable=True) # ID of faculty teaching it
     schedule = Column(String, nullable=True) # e.g. "Mon/Wed 10am"
-    credits = Column(Integer, default=3) # New field for credits
+    credits = Column(Integer, default=3)
+    location = Column(String, default="TBD")
+    fee = Column(Integer, default=500)
 
 class EnrollmentDB(Base):
     __tablename__ = "enrollments"

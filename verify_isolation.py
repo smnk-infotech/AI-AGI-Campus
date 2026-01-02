@@ -57,6 +57,8 @@ try:
     else:
         dash_gupta = res.json()
         print(f"\n[DR. GUPTA] Stats: {json.dumps(dash_gupta.get('stats'), indent=2)}")
+        print(f"[DR. GUPTA] Research: {json.dumps(dash_gupta.get('research_highlights'), indent=2)}")
+        print(f"[DR. GUPTA] Notifications: {json.dumps(dash_gupta.get('notifications'), indent=2)}")
 
     # 4. Prof. Dave (Faculty)
     print("\nLogging in Dave...")

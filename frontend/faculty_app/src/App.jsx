@@ -101,7 +101,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard faculty={faculty} />} />
           <Route path="/courses" element={<Courses />} />
-          <Route path="/schedule" element={<Schedule />} />
+          <Route path="/schedule" element={<Schedule faculty={faculty} />} />
           <Route path="/assignments" element={<Assignments />} />
           <Route path="/advising" element={<Advising />} />
           <Route path="/research" element={<Research />} />
