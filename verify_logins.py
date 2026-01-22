@@ -6,9 +6,9 @@ BASE_URL = "http://127.0.0.1:8000"
 AUTH_URL = f"{BASE_URL}/api/auth/token"
 
 creds = [
-    ("Student", "aarav.kumar@student.edu", "password123"),
-    ("Faculty", "dr.gupta@faculty.edu", "password123"),
-    ("Admin", "admin@campus.edu", "admin123")
+    ("Student", "24ucy129nandha@kgkite.ac.in", "password"),
+    ("Faculty", "Ashvadharsini@kgkite.ac.in", "password"),
+    ("Admin", "admin@kgkite.ac.in", "password")
 ]
 
 print(f"Verifying Auth for {len(creds)} roles at {AUTH_URL}...\n")

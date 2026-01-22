@@ -6,18 +6,19 @@ import inspect
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import text as sql_text
-from ..models_db import AGIMemory, AGILogs, StudentDB, FacultyDB, CourseDB, AssignmentDB, AttendanceDB, EnrollmentDB
+from ..models_db import AGIMemory, AGILogs, StudentDB, FacultyDB, CourseDB, AssignmentDB, AttendanceDB, EnrollmentDB, NotificationDB
 from ..database import SessionLocal
 from ..prompts import SMART_CAMPUS_BRAIN_PROMPT
 
 # --- Tool Registry & Schema ---
 
 class AgentTool:
-    def __init__(self, name: str, description: str, func, requires_db: bool = False):
+    def __init__(self, name: str, description: str, func, requires_db: bool = False, required_roles: list = None):
         self.name = name
         self.description = description
         self.func = func
         self.requires_db = requires_db
+        self.required_roles = required_roles or [] # E.g. ["admin", "faculty"]
 
     def execute(self, **kwargs):
         return self.func(**kwargs)
@@ -32,15 +33,19 @@ class ToolRegistry:
     def get_tool_descriptions(self) -> str:
         descriptions = []
         for name, tool in self.tools.items():
-            # simple signature extraction
             sig = str(inspect.signature(tool.func))
-            descriptions.append(f"- {name}{sig}: {tool.description}")
+            role_note = f" [Roles: {', '.join(tool.required_roles)}]" if tool.required_roles else " [Public]"
+            descriptions.append(f"- {name}{sig}: {tool.description}{role_note}")
         return "\n".join(descriptions)
 
-    def execute_tool(self, name: str, args: dict, db: Session = None):
+    def execute_tool(self, name: str, args: dict, db: Session = None, current_role: str = "student"):
         tool = self.tools.get(name)
         if not tool:
             return f"Error: Tool '{name}' not found."
+        
+        # RBAC Check
+        if tool.required_roles and current_role not in tool.required_roles:
+            return f"Error: Access Denied. Role '{current_role}' cannot use tool '{name}'."
         
         try:
             if tool.requires_db:
@@ -81,6 +86,45 @@ def tool_simulate_event(description: str):
     # In a real expanded version, this could query historical data trends
     return f"SIMULATION RESULT for '{description}': Prediction - 15% increase in student engagement, slight impact on faculty load."
 
+def tool_remember_fact(db: Session, category: str, fact: str):
+    """Store a key fact or preference relative to the current context."""
+    # Note: Ideally we need a user_id here. 
+    # For now, we will store it under a 'global' or inferred user if not passed (limitation of current tool sig).
+    # We'll default to 'unknown_user' if context isn't fully piped, but Phase 10 implies we should have user context.
+    # The 'think' method has user_id, but tool signature doesn't always have it.
+    # Let's assume user_id is passed as an arg for now or handled via context injection in a real frame.
+    
+    mem = AGIMemory(
+        id=str(uuid.uuid4()),
+        user_id="smnk_user", # Placeholder until tool signature expansion
+        role="user",
+        context_type=category,
+        content=fact,
+        timestamp=datetime.now().isoformat()
+    )
+    db.add(mem)
+    db.commit()
+    return f"I have committed this to my long-term memory: '{fact}'"
+
+def tool_recall_context(db: Session, category: str):
+    """Recall past memories about a specific category."""
+    mems = db.query(AGIMemory).filter(AGIMemory.context_type == category).limit(5).all()
+    if not mems: return "No specific memories found for this category."
+    return [m.content for m in mems]
+
+def tool_broadcast_alert(db: Session, message: str, target_role: str = "all"):
+    """Send a system-wide alert to user dashboards."""
+    note = NotificationDB(
+        id=str(uuid.uuid4()),
+        sender_role="admin",
+        message=message,
+        target_role=target_role,
+        timestamp=datetime.now().isoformat()
+    )
+    db.add(note)
+    db.commit()
+    return f"Alert Broadcasted to {target_role}: '{message}'"
+
 # --- Agent Runtime ---
 
 class AGIBrain:
@@ -93,9 +137,14 @@ class AGIBrain:
         
         self.registry = ToolRegistry()
         # Register Tools
-        self.registry.register(AgentTool("get_student_info", "Get details about a specific student by ID.", tool_get_student_info, requires_db=True))
-        self.registry.register(AgentTool("check_attendance_stats", "Get global campus attendance statistics.", tool_check_attendance_stats, requires_db=True))
-        self.registry.register(AgentTool("simulate_event", "Run a simulation for a policy or event.", tool_simulate_event, requires_db=False))
+        self.registry.register(AgentTool("get_student_info", "Get details about a specific student by ID.", tool_get_student_info, requires_db=True, required_roles=["student", "faculty", "admin"]))
+        self.registry.register(AgentTool("check_attendance_stats", "Get global campus attendance statistics.", tool_check_attendance_stats, requires_db=True, required_roles=["admin", "faculty"]))
+        self.registry.register(AgentTool("simulate_event", "Run a simulation for a policy or event.", tool_simulate_event, requires_db=False, required_roles=["admin"]))
+        
+        # Phase 10 Tools
+        self.registry.register(AgentTool("remember_fact", "Store a user preference or fact.", tool_remember_fact, requires_db=True))
+        self.registry.register(AgentTool("recall_context", "Recall past facts about a topic.", tool_recall_context, requires_db=True))
+        self.registry.register(AgentTool("broadcast_alert", "Send a system-wide alert notification.", tool_broadcast_alert, requires_db=True, required_roles=["admin"]))
 
     def think(self, goal: str, context_data: dict, module: str, db: Session, user_id: str = None) -> dict:
         """
@@ -150,7 +199,8 @@ class AGIBrain:
                 args = plan.get("tool_args", {})
                 
                 # Execute
-                observation = self.registry.execute_tool(tool_name, args, db=db)
+                # Pass 'module' as the 'current_role'
+                observation = self.registry.execute_tool(tool_name, args, db=db, current_role=module)
                 actions_log.append({"tool": tool_name, "args": args, "result": str(observation)})
                 
                 # Second Pass with Observation
@@ -184,16 +234,18 @@ class AGIBrain:
         return text.replace("```json", "").replace("```", "").strip()
 
     def _log_thought(self, goal, context, decision, module, db: Session):
-        log = AGILogs(
-            id=str(uuid.uuid4()),
-            timestamp=datetime.now().isoformat(),
-            goal=goal,
-            context_summary=str(context)[:500],
-            decision=str(decision)[:500],
-            module=module
-        )
-        db.add(log)
-        db.commit()
+        try:
+            log = AGILogs(
+                id=str(uuid.uuid4()),
+                timestamp=datetime.now().isoformat(),
+                goal=goal,
+                context_summary=str(context)[:500],
+                decision=str(decision)[:500],
+                module=module
+            )
+            db.add(log)
+            db.commit()
+        except:
+            db.rollback()
 
 agi_brain = AGIBrain()
-

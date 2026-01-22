@@ -24,10 +24,23 @@ export default function App() {
   const [token, setToken] = useState(localStorage.getItem('student_token'))
   const [student, setStudent] = useState(null)
 
-  // Persist token
+  // Persist token & Check URL for token handover
   useEffect(() => {
-    if (token) localStorage.setItem('student_token', token)
-    else localStorage.removeItem('student_token')
+    // 1. Check URL for token handover (from Universal Portal)
+    const params = new URLSearchParams(window.location.search)
+    const urlToken = params.get('token')
+    if (urlToken) {
+      localStorage.setItem('student_token', urlToken)
+      setToken(urlToken)
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+    // 2. Persist existing token changes
+    else if (token) {
+      localStorage.setItem('student_token', token)
+    } else {
+      localStorage.removeItem('student_token')
+    }
   }, [token])
 
   useEffect(() => {

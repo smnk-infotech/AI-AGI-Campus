@@ -123,19 +123,21 @@ function AGIWidget({ student }) {
         </h3>
       </header>
       <div className="p-4">
-        <div style={{ marginBottom: '10px' }}>
-          <strong>Analysis:</strong> <span className="muted">{insight.analysis}</span>
-        </div>
+        {/* Render Actions (Thinking Steps) */}
+        {insight.actions && insight.actions.length > 0 && (
+          <div style={{ marginBottom: '10px', fontSize: '0.85rem', color: '#666' }}>
+            {insight.actions.map((action, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '4px' }}>
+                <span>⚙️</span>
+                <span>Used <strong>{action.tool}</strong></span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="highlight-box" style={{ background: 'var(--bg-elevated)', padding: '10px', borderRadius: '8px', borderLeft: '4px solid var(--accent-color)' }}>
-          <strong>Recommendation:</strong> {insight.decision}
+          <strong>Recommendation:</strong> {insight.reply}
         </div>
-        {/* Explanation hidden by default for students, strictly shown for admin? Or maybe show as 'Why?' 
-            For now, showing it small.
-        */}
-        <details style={{ marginTop: '10px', cursor: 'pointer' }}>
-          <summary className="small muted">Why this suggestion?</summary>
-          <p className="small mt-2">{insight.explanation}</p>
-        </details>
       </div>
     </div>
   )

@@ -52,7 +52,7 @@ export default function Home() {
 						<h1>AI + AGI powered campus system (college capstone)</h1>
 						<p className="lead">
 							An academic project demonstrating role-based portals (admin, faculty, student, parent), an AI tutor, and
-								a FastAPI backend using only free and open-source tools.
+							a FastAPI backend using only free and open-source tools.
 						</p>
 						<div className="hero-ctas">
 							<a className="btn btn-primary" href="/portal">Open Portal</a>

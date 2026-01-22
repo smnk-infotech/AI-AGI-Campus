@@ -185,7 +185,7 @@ export default function Portal() {
         </article>
       </section>
 
-      
+
     </div>
   )
 }

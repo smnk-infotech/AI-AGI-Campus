@@ -22,8 +22,20 @@ export default function App() {
   const [faculty, setFaculty] = useState(null)
 
   useEffect(() => {
-    if (token) localStorage.setItem('faculty_token', token)
-    else localStorage.removeItem('faculty_token')
+    // 1. Check URL for token handover (from Universal Portal)
+    const params = new URLSearchParams(window.location.search)
+    const urlToken = params.get('token')
+    if (urlToken) {
+      localStorage.setItem('faculty_token', urlToken)
+      setToken(urlToken)
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+    // 2. Persist
+    else if (token) {
+      localStorage.setItem('faculty_token', token)
+    } else {
+      localStorage.removeItem('faculty_token')
+    }
   }, [token])
 
   useEffect(() => {

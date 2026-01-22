@@ -96,3 +96,13 @@ class AGILogs(Base):
     confidence = Column(Integer) # 0-100
     module = Column(String) # "student", "faculty", "admin"
 
+class NotificationDB(Base):
+    __tablename__ = "notifications"
+
+    id = Column(String, primary_key=True, index=True)
+    sender_role = Column(String) # "admin", "system"
+    message = Column(String)
+    target_role = Column(String) # "all", "student", "faculty"
+    timestamp = Column(String)
+
+

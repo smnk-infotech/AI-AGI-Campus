@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from ...models.student import Student
 from ..database import get_db
-from ..models_db import StudentDB, EnrollmentDB, CourseDB, AssignmentDB, AttendanceDB
+from ..models_db import StudentDB, EnrollmentDB, CourseDB, AssignmentDB, AttendanceDB, NotificationDB
 
 router = APIRouter(prefix="/api/students", tags=["students"])
 
@@ -59,10 +59,15 @@ def get_student_dashboard(student_id: str, db: Session = Depends(get_db)):
     present_att = db.query(AttendanceDB).filter(AttendanceDB.student_id == student_id, AttendanceDB.status == "Present").count()
     att_rate = int((present_att / total_att * 100)) if total_att > 0 else 100
 
-    # 3. Alerts (Assignments)
+    # 3. Alerts (Assignments + System Broadcasts)
     alerts = []
-    # due_soon = db.query(AssignmentDB).filter(AssignmentDB.course_id.in_(courses_ids)).limit(2).all() # Simple logic
-    # Using python filtering for simplicity on small datasets
+    
+    # A. System Notifications
+    sys_notes = db.query(NotificationDB).filter(NotificationDB.target_role.in_(["all", "student"])).order_by(NotificationDB.timestamp.desc()).limit(3).all()
+    for n in sys_notes:
+        alerts.append({ "id": n.id, "title": f"📢 {n.message}", "type": "System Alert" })
+
+    # B. Assignment Deadlines
     all_assignments = db.query(AssignmentDB).filter(AssignmentDB.course_id.in_(courses_ids)).all()
     for a in all_assignments:
         alerts.append({ "id": a.id, "title": f"Due: {a.title}", "type": "Assignment" })

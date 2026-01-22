@@ -23,8 +23,20 @@ export default function App() {
   const linkClass = ({ isActive }) => `tab-link ${isActive ? 'active' : ''}`
 
   useEffect(() => {
-    if (token) localStorage.setItem('admin_token', token)
-    else localStorage.removeItem('admin_token')
+    // 1. Check URL for token handover (from Universal Portal)
+    const params = new URLSearchParams(window.location.search)
+    const urlToken = params.get('token')
+    if (urlToken) {
+      localStorage.setItem('admin_token', urlToken)
+      setToken(urlToken)
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+    // 2. Persist
+    else if (token) {
+      localStorage.setItem('admin_token', token)
+    } else {
+      localStorage.removeItem('admin_token')
+    }
   }, [token])
 
   useEffect(() => {

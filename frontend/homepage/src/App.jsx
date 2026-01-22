@@ -48,12 +48,14 @@ function Footer() {
 	return (
 		<footer className="footer">
 			<div className="container footer-inner">
-				<div>© {new Date().getFullYear()} AI-AGI Campus — Academic Capstone Project</div>
+				<div>© 2026 AI-AGI Campus — Academic Capstone Project</div>
 				<div className="muted">Non-commercial, for educational demonstration only</div>
 			</div>
 		</footer>
 	)
 }
+
+import Login from './components/Login'
 
 export default function App() {
 	return (
@@ -64,7 +66,7 @@ export default function App() {
 					<Route path="/" element={<Home />} />
 					<Route path="/features" element={<Features />} />
 					<Route path="/about" element={<About />} />
-					<Route path="/portal" element={<Portal />} />
+					<Route path="/portal" element={<Login />} />
 					<Route path="*" element={<Navigate to="/" replace />} />
 				</Routes>
 			</main>
