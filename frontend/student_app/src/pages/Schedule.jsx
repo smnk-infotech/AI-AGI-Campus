@@ -8,7 +8,7 @@ export default function Schedule({ student }) {
     if (!student) return
     const fetchData = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/students/${student.id}/dashboard`)
+        const res = await fetch(`http://localhost:8001/api/students/${student.id}/dashboard`)
         if (res.ok) {
           const data = await res.json()
           const courses = data.schedule || [] // In student API, 'schedule' is the list of courses

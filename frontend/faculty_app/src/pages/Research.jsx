@@ -58,7 +58,7 @@ export default function Research() {
     setLoading(true)
 
     try {
-      const res = await fetch('http://localhost:8000/api/ai/messages', {
+      const res = await fetch('http://localhost:8001/api/ai/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

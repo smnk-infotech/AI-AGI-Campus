@@ -43,7 +43,7 @@ export default function App() {
     if (!token) return
     const fetchAdmin = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/auth/me', {
+        const res = await fetch('http://localhost:8001/api/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         })
         if (res.ok) {

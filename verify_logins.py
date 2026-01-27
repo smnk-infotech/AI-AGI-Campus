@@ -2,13 +2,21 @@
 import requests
 import json
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "http://127.0.0.1:8001"
 AUTH_URL = f"{BASE_URL}/api/auth/token"
 
+print("Checking Routes via OpenAPI...")
+try:
+    schema = requests.get(f"{BASE_URL}/openapi.json").json()
+    paths = list(schema.get("paths", {}).keys())
+    print("Available Paths:", paths)
+except Exception as e:
+    print(f"Could not fetch OpenAPI: {e}")
+
 creds = [
-    ("Student", "24ucy129nandha@kgkite.ac.in", "password"),
-    ("Faculty", "Ashvadharsini@kgkite.ac.in", "password"),
-    ("Admin", "admin@kgkite.ac.in", "password")
+    ("Student", "aarav.kumar@student.edu", "password123"),
+    ("Faculty", "dr.gupta@faculty.edu", "password123"),
+    ("Admin", "admin@campus.edu", "admin123")
 ]
 
 print(f"Verifying Auth for {len(creds)} roles at {AUTH_URL}...\n")

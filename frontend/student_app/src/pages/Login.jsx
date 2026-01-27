@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8001'
 
 export default function Login({ setToken }) {
     const [email, setEmail] = useState('aarav.kumar@student.edu')

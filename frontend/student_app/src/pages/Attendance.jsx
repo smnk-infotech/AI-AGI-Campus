@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8001'
 const STUDENT_ID = "53576fbc-5bde-46ac-b4d7-48eeed9b5f126" // Seeded Aarav ID
 
 export default function Attendance() {

@@ -6,7 +6,7 @@ echo     STARTING AI + AGI CAMPUS SYSTEM
 echo ===================================================
 
 echo [1/5] Starting Backend Server (Port 8000)...
-start "Backend API" cmd /k "call backend\api\.venv\Scripts\activate && set PYTHONPATH=. && python -m uvicorn backend.api.main:app --reload"
+start "Backend API" cmd /k "call backend\api\.venv\Scripts\activate && set PYTHONPATH=. && python -m uvicorn backend.api.main:app --port 8001 --reload"
 
 echo [2/5] Starting Gateway Portal (Port 5173)...
 start "Gateway Portal" cmd /k "cd frontend\homepage && npm run dev"
@@ -27,9 +27,9 @@ echo Access the Unified Portal:
 echo - Gateway: http://localhost:5173/portal
 echo.
 echo Credentials (Updated):
-echo - Student: 24ucy129nandha@kgkite.ac.in / password
-echo - Faculty: Ashvadharsini@kgkite.ac.in / password
-echo - Admin:   admin@kgkite.ac.in / password
+echo - Student: aarav.kumar@student.edu / password123
+echo - Faculty: dr.gupta@faculty.edu / password123
+echo - Admin:   admin@campus.edu / admin123
 echo.
 echo Direct Access (If needed):
 echo - Student: http://localhost:5174

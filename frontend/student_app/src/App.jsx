@@ -50,7 +50,7 @@ export default function App() {
         // With real auth, use /api/auth/me. For now, we list students or decode token if needed.
         // Assuming single user per demo or extracting ID from token payload (not implemented in frontend decode yet).
         // Fallback to fetching first student for demo continuity until /me endpoint exists.
-        const res = await fetch('http://localhost:8000/api/auth/me', {
+        const res = await fetch('http://localhost:8001/api/auth/me', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

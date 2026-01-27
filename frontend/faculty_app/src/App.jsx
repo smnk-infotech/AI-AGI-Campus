@@ -54,7 +54,7 @@ export default function App() {
         // I will fix backend auth in parallel or next step.
         // For now, let's assume /me will be updated to handle faculty or I use a different endpoint?
         // Let's stick to /me but I MUST fix the backend.
-        const res = await fetch('http://localhost:8000/api/auth/me', {
+        const res = await fetch('http://localhost:8001/api/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         })
         if (res.ok) {

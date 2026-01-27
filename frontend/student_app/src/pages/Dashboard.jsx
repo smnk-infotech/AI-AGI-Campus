@@ -10,7 +10,7 @@ export default function Dashboard({ student }) {
     if (!student) return
     const fetchData = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/students/${student.id}/dashboard`)
+        const res = await fetch(`http://localhost:8001/api/students/${student.id}/dashboard`)
         if (res.ok) {
           const data = await res.json()
           setStats(data.stats)
@@ -91,7 +91,7 @@ function AGIWidget({ student }) {
     const fetchAGI = async () => {
       setLoading(true)
       try {
-        const res = await fetch('http://localhost:8000/api/ai/agi', {
+        const res = await fetch('http://localhost:8001/api/ai/agi', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

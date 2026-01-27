@@ -7,7 +7,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/admin/dashboard')
+    fetch('http://localhost:8001/api/admin/dashboard')
       .then(res => res.json())
       .then(data => {
         setStats(data.stats || [])
@@ -82,7 +82,7 @@ function AGIWidget() {
   const fetchAGI = async (customGoal = null) => {
     setLoading(true)
     try {
-      const res = await fetch('http://localhost:8000/api/ai/agi', {
+      const res = await fetch('http://localhost:8001/api/ai/agi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

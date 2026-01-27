@@ -3,7 +3,7 @@ import requests
 import json
 import uuid
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "http://127.0.0.1:8001"
 
 def get_token(email, password):
     res = requests.post(f"{BASE_URL}/api/auth/token", data={"username": email, "password": password})
@@ -23,7 +23,8 @@ try:
         "name": course_name,
         "description": "Deep dive into AGI",
         "department": "Computer Science",
-        "schedule": "Mon-Wed 10am"
+        "schedule": "Mon-Wed 10am",
+        "code": f"AI-{uuid.uuid4().hex[:4].upper()}"
     }
     
     # Create
