@@ -2,7 +2,7 @@ import requests
 import json
 import sys
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8001"
 
 def test_agi_agent():
     print(f"Testing AGI Agent at {BASE_URL}...")
