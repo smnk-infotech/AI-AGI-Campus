@@ -1,31 +1,35 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 
 const heroStats = [
-	{ label: 'Modules', value: '4' },
-	{ label: 'Open-Source Tools', value: '12+' },
-	{ label: 'Timeline', value: '12 months' }
+	{ label: 'Active Students', value: '2,500+' },
+	{ label: 'Faculty Members', value: '150+' },
+	{ label: 'Departments', value: '12' }
 ]
 
-const featureHighlights = [
+const roleCards = [
 	{
-		title: 'Student Module',
-		description:
-			'AI Tutor (chat/voice/video), attendance with face recognition, progress tracking, and course workspaces.'
+		title: 'For Students',
+		icon: '🎓',
+		description: 'Access AI-powered tutoring, track attendance with facial recognition, manage assignments, and collaborate in course workspaces.',
+		features: ['AI Tutor (Chat/Voice/Video)', 'Smart Attendance Tracking', 'Progress Analytics', 'Course Collaboration'],
+		cta: 'Student Portal',
+		link: '/portal'
 	},
 	{
-		title: 'Faculty Module',
-		description:
-			'Lesson planning assistant, assignment workflows, analytics, and schedule management.'
+		title: 'For Faculty',
+		icon: '👨‍🏫',
+		description: 'Streamline lesson planning, manage assignments efficiently, access student analytics, and optimize your teaching schedule.',
+		features: ['AI Lesson Planning', 'Assignment Workflows', 'Student Analytics', 'Schedule Management'],
+		cta: 'Faculty Portal',
+		link: '/portal'
 	},
 	{
-		title: 'Admin Module',
-		description:
-			'Operations, finance, timetable automation, and central announcements for campus administration.'
-	},
-	{
-		title: 'AGI Controller (Simulation)',
-		description:
-			'Multi-agent reasoning with LangChain/AutoGPT/CrewAI for planning and predictive analytics.'
+		title: 'For Administration',
+		icon: '🏛️',
+		description: 'Oversee campus operations, manage finances, automate timetables, and communicate important announcements effectively.',
+		features: ['Operations Dashboard', 'Financial Management', 'Timetable Automation', 'Central Announcements'],
+		cta: 'Admin Portal',
+		link: '/portal'
 	}
 ]
 
@@ -44,32 +48,79 @@ const projectNotes = [
 ]
 
 export default function Home() {
+	const observerRef = useRef(null)
+
+	useEffect(() => {
+		// Intersection Observer for scroll animations
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('fade-in')
+					}
+				})
+			},
+			{ threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+		)
+
+		// Observe all sections and cards
+		const elements = document.querySelectorAll('.role-card, .stat-card, .project-card')
+		elements.forEach((el) => observer.observe(el))
+
+		observerRef.current = observer
+
+		return () => {
+			if (observerRef.current) {
+				observerRef.current.disconnect()
+			}
+		}
+	}, [])
+
 	return (
 		<>
+			{/* Hero Section - Enhanced with better messaging and visual hierarchy */}
 			<section className="hero">
 				<div className="container hero-inner">
 					<div className="hero-content">
-						<h1>AI + AGI powered campus system (college capstone)</h1>
+						<div className="hero-badge">Academic Capstone Project</div>
+						<h1>Transforming Education with AI & AGI</h1>
 						<p className="lead">
-							An academic project demonstrating role-based portals (admin, faculty, student, parent), an AI tutor, and
-							a FastAPI backend using only free and open-source tools.
+							Experience the future of campus management with our intelligent ERP system.
+							Built for students, faculty, and administrators with cutting-edge AI technology.
 						</p>
+						<div className="hero-stats">
+							{heroStats.map((stat) => (
+								<div key={stat.label} className="hero-stat">
+									<div className="stat-number">{stat.value}</div>
+									<div className="stat-label">{stat.label}</div>
+								</div>
+							))}
+						</div>
 						<div className="hero-ctas">
-							<a className="btn btn-primary" href="/portal">Open Portal</a>
-							<a className="btn btn-ghost" href="/features">View modules</a>
+							<a className="btn btn-primary" href="/portal">Access Portal</a>
+							<a className="btn btn-secondary" href="#features">Explore Features</a>
 						</div>
 					</div>
 					<div className="hero-visual" aria-hidden>
-						<div className="mock-window">
-							<div className="mock-header"></div>
-							<div className="mock-body">
-								<div className="mock-stats">
-									{heroStats.map((stat) => (
-										<div key={stat.label} className="mstat">
-											<strong>{stat.value}</strong>
-											<div>{stat.label}</div>
-										</div>
-									))}
+						<div className="hero-illustration">
+							<div className="illustration-circle circle-1"></div>
+							<div className="illustration-circle circle-2"></div>
+							<div className="illustration-circle circle-3"></div>
+							<div className="hero-dashboard">
+								<div className="dashboard-header"></div>
+								<div className="dashboard-content">
+									<div className="dashboard-metric">
+										<span className="metric-value">98%</span>
+										<span className="metric-label">Attendance</span>
+									</div>
+									<div className="dashboard-metric">
+										<span className="metric-value">24/7</span>
+										<span className="metric-label">AI Support</span>
+									</div>
+									<div className="dashboard-metric">
+										<span className="metric-value">15min</span>
+										<span className="metric-label">Avg Response</span>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -77,39 +128,77 @@ export default function Home() {
 				</div>
 			</section>
 
-			<section className="section container">
-				<h2>Features built for every campus role</h2>
-				<p className="muted">
-					Purpose-built workflows accelerate administrators, lighten faculty load, delight parents and keep students
-					on track.
-				</p>
-				<div className="features-grid">
-					{featureHighlights.map((feature) => (
-						<div key={feature.title} className="card feature-card">
-							<h3>{feature.title}</h3>
-							<p className="muted">{feature.description}</p>
-						</div>
-					))}
+			{/* Role-Based Features Section */}
+			<section id="features" className="section features-section">
+				<div className="container">
+					<div className="section-header">
+						<h2>Comprehensive Solutions for Every Role</h2>
+						<p className="section-subtitle">
+							Purpose-built workflows that accelerate administrators, lighten faculty workload,
+							and empower students to excel in their academic journey.
+						</p>
+					</div>
+					<div className="role-cards-grid">
+						{roleCards.map((card, index) => (
+							<div key={card.title} className={`role-card delay-${index + 1}`}>
+								<div className="role-card-header">
+									<div className="role-icon">{card.icon}</div>
+									<h3>{card.title}</h3>
+								</div>
+								<p className="role-description">{card.description}</p>
+								<ul className="role-features">
+									{card.features.map((feature) => (
+										<li key={feature}>
+											<span className="feature-check">✓</span>
+											{feature}
+										</li>
+									))}
+								</ul>
+								<a href={card.link} className="btn btn-outline">{card.cta}</a>
+							</div>
+						))}
+					</div>
 				</div>
 			</section>
 
-			<section className="section stats container">
-				{stats.map((stat) => (
-					<div key={stat.label} className="stat">
-						<div className="stat-value">{stat.value}</div>
-						<div className="stat-label muted">{stat.label}</div>
+			{/* Technology Stack Section */}
+			<section className="section tech-section">
+				<div className="container">
+					<div className="section-header">
+						<h2>Built with Modern Technology</h2>
+						<p className="section-subtitle">
+							Leveraging the latest in AI, cloud computing, and open-source frameworks
+						</p>
 					</div>
-				))}
+					<div className="stats-grid">
+						{stats.map((stat) => (
+							<div key={stat.label} className="stat-card">
+								<div className="stat-value">{stat.value}</div>
+								<div className="stat-label">{stat.label}</div>
+							</div>
+						))}
+					</div>
+				</div>
 			</section>
 
-			<section className="section container">
-				<h2>About this project</h2>
-				<div className="card">
-					<ul className="list">
-						{projectNotes.map((note) => (
-							<li key={note}>{note}</li>
-						))}
-					</ul>
+			{/* Project Information Section */}
+			<section className="section project-section">
+				<div className="container">
+					<div className="section-header">
+						<h2>About This Academic Project</h2>
+					</div>
+					<div className="project-card">
+						<div className="project-content">
+							<ul className="project-notes">
+								{projectNotes.map((note) => (
+									<li key={note}>
+										<span className="note-icon">ℹ️</span>
+										{note}
+									</li>
+								))}
+							</ul>
+						</div>
+					</div>
 				</div>
 			</section>
 		</>

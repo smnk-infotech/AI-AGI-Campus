@@ -129,12 +129,8 @@ def tool_broadcast_alert(db: Session, message: str, target_role: str = "all"):
 
 class AGIBrain:
     def __init__(self):
-        self.api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
         self.model = None
-        if self.api_key:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash')
-        
+        self._model_checked = False
         self.registry = ToolRegistry()
         # Register Tools
         self.registry.register(AgentTool("get_student_info", "Get details about a specific student by ID.", tool_get_student_info, requires_db=True, required_roles=["student", "faculty", "admin"]))
@@ -146,6 +142,17 @@ class AGIBrain:
         self.registry.register(AgentTool("recall_context", "Recall past facts about a topic.", tool_recall_context, requires_db=True))
         self.registry.register(AgentTool("broadcast_alert", "Send a system-wide alert notification.", tool_broadcast_alert, requires_db=True, required_roles=["admin"]))
 
+    def _ensure_model(self):
+        """Lazy-init: configure the Gemini model on first use so the .env
+        has been loaded by main.py before we read the key."""
+        if self._model_checked:
+            return
+        self._model_checked = True
+        api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+        if api_key:
+            genai.configure(api_key=api_key)
+            self.model = genai.GenerativeModel('gemini-2.5-flash')
+
     def think(self, goal: str, context_data: dict, module: str, db: Session, user_id: str = None) -> dict:
         """
         ReAct Logic:
@@ -154,6 +161,7 @@ class AGIBrain:
         3. Execute Tool
         4. Final Answer
         """
+        self._ensure_model()
         if not self.model:
             return {"reply": "AI Offline (No Key)", "actions": []}
 

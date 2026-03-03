@@ -15,13 +15,13 @@ const DESTINATIONS = {
 }
 
 const EMAIL_ROLE_MAP = {
-  'admin@gmail.com': 'admin',
-  'teacher@gmail.com': 'faculty',
-  'student@gmail.com': 'student'
+  'admin@campus.edu': 'admin',
+  'dr.gupta@faculty.edu': 'faculty',
+  'aarav.kumar@student.edu': 'student'
 }
 
-const DEMO_PASSWORD = 'password'
-const PASSWORD_HINT = 'password (or the same as the email)'
+const DEMO_PASSWORD = 'password123'
+const PASSWORD_HINT = 'password123'
 
 const experiences = [
   {
@@ -48,9 +48,9 @@ const experiences = [
 ]
 
 const demoCredentials = [
-  { role: 'Administrator', email: 'admin@gmail.com', password: PASSWORD_HINT, destination: DESTINATIONS.admin },
-  { role: 'Faculty / Teacher', email: 'teacher@gmail.com', password: PASSWORD_HINT, destination: DESTINATIONS.faculty },
-  { role: 'Student', email: 'student@gmail.com', password: PASSWORD_HINT, destination: DESTINATIONS.student }
+  { role: 'Administrator', email: 'admin@campus.edu', password: 'admin123', destination: DESTINATIONS.admin },
+  { role: 'Faculty / Teacher', email: 'dr.gupta@faculty.edu', password: 'password123', destination: DESTINATIONS.faculty },
+  { role: 'Student', email: 'aarav.kumar@student.edu', password: 'password123', destination: DESTINATIONS.student }
 ]
 
 const resolveRole = (email) => {
@@ -89,14 +89,20 @@ export default function Portal() {
       return
     }
 
-    // Demo auth: restrict to the three provided emails and a shared password
+    // Demo auth: restrict to the three provided emails and correct passwords
     const normalizedEmail = trimmed.toLowerCase()
     const expectedRole = EMAIL_ROLE_MAP[normalizedEmail]
-    const localPart = normalizedEmail.split('@')[0]
-    const validPassword = pwd === DEMO_PASSWORD || pwd.toLowerCase() === normalizedEmail || pwd.toLowerCase() === localPart
+    let validPassword = false
+    
+    if (expectedRole === 'admin') {
+        validPassword = pwd === 'admin123'
+    } else if (expectedRole === 'faculty' || expectedRole === 'student') {
+        validPassword = pwd === 'password123'
+    }
+    
     if (!expectedRole || !validPassword) {
       setStatus('error')
-      setMessage('Invalid demo credentials. Use the emails listed below and the password shown.')
+      setMessage('Invalid demo credentials. Use the emails and passwords listed below.')
       return
     }
 

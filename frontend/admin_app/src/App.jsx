@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { NavLink, Routes, Route, Navigate } from 'react-router-dom'
+import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { LayoutDashboard, Users, Briefcase, Activity, FileBarChart, Cpu, LogOut } from 'lucide-react'
+import api from './services/api'
 import Dashboard from './pages/Dashboard'
 import Students from './pages/Students'
 import Staff from './pages/Staff'
@@ -9,21 +11,20 @@ import AGIController from './pages/AGIController'
 import Login from './pages/Login'
 
 const links = [
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/students', label: 'Students' },
-  { to: '/staff', label: 'Staff' },
-  { to: '/operations', label: 'Operations' },
-  { to: '/reports', label: 'Reports' },
-  { to: '/agi', label: 'AGI Controller' },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/students', label: 'Students', icon: Users },
+  { to: '/staff', label: 'Staff', icon: Briefcase },
+  { to: '/operations', label: 'Operations', icon: Activity },
+  { to: '/reports', label: 'Reports', icon: FileBarChart },
+  { to: '/agi', label: 'AGI Controller', icon: Cpu },
 ]
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('admin_token'))
   const [admin, setAdmin] = useState(null)
-  const linkClass = ({ isActive }) => `tab-link ${isActive ? 'active' : ''}`
 
+  // Persist token & Check URL for token handover
   useEffect(() => {
-    // 1. Check URL for token handover (from Universal Portal)
     const params = new URLSearchParams(window.location.search)
     const urlToken = params.get('token')
     if (urlToken) {
@@ -31,7 +32,6 @@ export default function App() {
       setToken(urlToken)
       window.history.replaceState({}, document.title, window.location.pathname)
     }
-    // 2. Persist
     else if (token) {
       localStorage.setItem('admin_token', token)
     } else {
@@ -43,17 +43,10 @@ export default function App() {
     if (!token) return
     const fetchAdmin = async () => {
       try {
-        const res = await fetch('http://localhost:8001/api/auth/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setAdmin(data)
-        } else {
-          setToken(null)
-        }
+        const data = await api.getCurrentUser()
+        setAdmin(data)
       } catch (e) {
-        console.error(e)
+        console.error('Failed to fetch admin:', e)
       }
     }
     fetchAdmin()
@@ -69,39 +62,48 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell admin-theme">
-      <header className="topbar">
-        <div>
-          <h1>Admin Console</h1>
-          <p>Monitor operations, manage people, and keep the campus running smoothly.</p>
-        </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <span style={{ fontSize: '0.9rem', color: '#666' }}>
-            {admin ? `${admin.first_name} ${admin.last_name}` : 'Admin'}
-          </span>
-          <button onClick={logout} className="btn-secondary btn-sm">Logout</button>
-          <button className="btn-primary">Create Announcement</button>
-        </div>
-      </header>
+    <div className="app-container">
+      <div className="central-container">
+        {/* Header Card */}
+        <header className="header-card">
+          <div>
+            <h1 className="app-title">Admin Console</h1>
+            <p className="app-subtitle">Monitor operations, manage people, and keep the campus running smoothly.</p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{admin ? `${admin.first_name} ${admin.last_name}` : 'Administrator'}</div>
+            <button onClick={logout} className="btn-sm" style={{ marginTop: 8 }}>Logout</button>
+          </div>
+        </header>
 
-      <nav className="tabs">
-        {links.map(item => (
-          <NavLink key={item.to} to={item.to} className={linkClass}>{item.label}</NavLink>
-        ))}
-      </nav>
+        {/* Navigation Pills */}
+        <nav className="nav-pills">
+          {links.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === '/'}
+              className={({ isActive }) => `nav-pill ${isActive ? 'active' : ''}`}
+            >
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
 
-      <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/students" element={<Students />} />
-          <Route path="/staff" element={<Staff />} />
-          <Route path="/operations" element={<Operations />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/agi" element={<AGIController />} />
-          <Route path="*" element={<Dashboard />} />
-        </Routes>
-      </main>
+        {/* Main Content */}
+        <main>
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/students" element={<Students />} />
+            <Route path="/staff" element={<Staff />} />
+            <Route path="/operations" element={<Operations />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/agi" element={<AGIController />} />
+            <Route path="*" element={<Dashboard />} />
+          </Routes>
+        </main>
+      </div>
     </div>
   )
 }

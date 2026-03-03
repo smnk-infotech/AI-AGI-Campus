@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { NavLink, Route, Routes } from 'react-router-dom'
+import { NavLink, Route, Routes, Navigate, useLocation } from 'react-router-dom'
+import { LayoutDashboard, BookOpen, Calendar, File, Users, FlaskConical, LogOut } from 'lucide-react'
+import api from './services/api'
 import Dashboard from './pages/Dashboard'
 import Courses from './pages/Courses'
 import Schedule from './pages/Schedule'
@@ -9,20 +11,25 @@ import Assignments from './pages/Assignments'
 import Login from './pages/Login'
 
 const links = [
-  { path: '/', label: 'Dashboard' },
-  { path: '/courses', label: 'Courses' },
-  { path: '/schedule', label: 'Schedule' },
-  { path: '/assignments', label: 'Assignments' },
-  { path: '/advising', label: 'Advising' },
-  { path: '/research', label: 'Research & Development' }
+  { path: '/', label: 'Overview', icon: LayoutDashboard },
+  { path: '/courses', label: 'Courses', icon: BookOpen },
+  { path: '/schedule', label: 'Schedule', icon: Calendar },
+  { path: '/assignments', label: 'Assignments', icon: File },
+  { path: '/advising', label: 'Advising', icon: Users },
+  { path: '/research', label: 'Research', icon: FlaskConical }
 ]
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('faculty_token'))
   const [faculty, setFaculty] = useState(null)
+  const location = useLocation()
 
+  // Page Title logic
+  const currentLink = links.find(l => l.path === location.pathname)
+  const pageTitle = currentLink ? currentLink.label : 'Faculty Portal'
+
+  // Persist token & Check URL for token handover
   useEffect(() => {
-    // 1. Check URL for token handover (from Universal Portal)
     const params = new URLSearchParams(window.location.search)
     const urlToken = params.get('token')
     if (urlToken) {
@@ -30,7 +37,6 @@ export default function App() {
       setToken(urlToken)
       window.history.replaceState({}, document.title, window.location.pathname)
     }
-    // 2. Persist
     else if (token) {
       localStorage.setItem('faculty_token', token)
     } else {
@@ -42,30 +48,10 @@ export default function App() {
     if (!token) return
     const fetchFaculty = async () => {
       try {
-        // Note: Reuse auth/me if we unify, but backend/api/routers/auth.py uses StudentDB for /me? 
-        // Wait, we updated /me to return "role". If /me assumes student, it might fail or return student data.
-        // The auth.py router logic: "user = db.query(StudentDB)..."
-        // So /me ONLY works for students right now.
-        // I need to update auth.py to handle faculty login too, OR duplicate login endpoint?
-        // The `login_for_access_token` checks StudentDB. 
-        // I need to update backend auth to support Faculty login!
-        // I missed that in the plan details. The plan said "Authenticate student (or extend toFaculty/Admin)".
-        // I will update App.jsx to try fetching, but if backend fails, login won't work.
-        // I will fix backend auth in parallel or next step.
-        // For now, let's assume /me will be updated to handle faculty or I use a different endpoint?
-        // Let's stick to /me but I MUST fix the backend.
-        const res = await fetch('http://localhost:8001/api/auth/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setFaculty(data)
-        } else {
-          // For now, if /me fails (e.g. wrong role), maybe we logout?
-          setToken(null)
-        }
+        const data = await api.getCurrentUser()
+        setFaculty(data)
       } catch (e) {
-        console.error(e)
+        console.error('Failed to fetch faculty:', e)
       }
     }
     fetchFaculty()
@@ -81,44 +67,57 @@ export default function App() {
   }
 
   return (
-    <div className="app faculty-console">
-      <header className="topbar">
-        <div className="brand">
-          <h1>Faculty Experience</h1>
-          <p>Plan instruction, monitor learners and advance your research.</p>
+    <div className="app-container">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          AI-AGI Campus
         </div>
-        <div className="profile">
-          <div className="profile-name">{faculty ? `${faculty.first_name} ${faculty.last_name}` : 'Dr. Riley Thompson'}</div>
-          <div className="profile-role">{faculty ? faculty.department : 'Physics & Emerging Robotics'}</div>
-          <button onClick={logout} className="btn-sm" style={{ marginLeft: 10 }}>Logout</button>
+        <nav className="sidebar-nav">
+          {links.map((link) => {
+            const Icon = link.icon
+            return (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                end={link.path === '/'}
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+              >
+                <Icon size={18} />
+                <span>{link.label}</span>
+              </NavLink>
+            )
+          })}
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="main-content">
+        <header className="top-header">
+          <div className="page-title">{pageTitle}</div>
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden sm:block">
+              <div className="text-sm font-semibold text-gray-900">{faculty ? `${faculty.first_name} ${faculty.last_name}` : 'Loading...'}</div>
+              <div className="text-sm text-slate-500">{faculty ? faculty.department : ''}</div>
+            </div>
+            <button onClick={logout} className="btn btn-secondary" title="Logout">
+              <LogOut size={16} />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
+        </header>
+
+        <div className="content-area">
+          <Routes>
+            <Route path="/" element={<Dashboard faculty={faculty} />} />
+            <Route path="/courses" element={<Courses faculty={faculty} />} />
+            <Route path="/schedule" element={<Schedule faculty={faculty} />} />
+            <Route path="/assignments" element={<Assignments faculty={faculty} />} />
+            <Route path="/advising" element={<Advising faculty={faculty} />} />
+            <Route path="/research" element={<Research faculty={faculty} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </div>
-      </header>
-
-      <nav className="tabs">
-        {links.map((link) => (
-          <NavLink
-            key={link.path}
-            to={link.path}
-            end={link.path === '/'}
-            className={({ isActive }) =>
-              isActive ? 'tab tab-active' : 'tab'
-            }
-          >
-            {link.label}
-          </NavLink>
-        ))}
-      </nav>
-
-      <main className="content">
-        <Routes>
-          <Route path="/" element={<Dashboard faculty={faculty} />} />
-          <Route path="/courses" element={<Courses faculty={faculty} />} />
-          <Route path="/schedule" element={<Schedule faculty={faculty} />} />
-          <Route path="/assignments" element={<Assignments faculty={faculty} />} />
-          <Route path="/advising" element={<Advising faculty={faculty} />} />
-          <Route path="/research" element={<Research faculty={faculty} />} />
-          <Route path="*" element={<Dashboard faculty={faculty} />} />
-        </Routes>
       </main>
     </div>
   )

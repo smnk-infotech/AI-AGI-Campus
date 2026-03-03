@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import api from '../services/api'
 
 export default function Schedule({ faculty }) {
   const [schedule, setSchedule] = useState([])
@@ -8,26 +9,22 @@ export default function Schedule({ faculty }) {
     if (!faculty) return
     const fetchData = async () => {
       try {
-        const res = await fetch(`http://localhost:8001/api/faculty/${faculty.id}/dashboard`)
-        if (res.ok) {
-          const data = await res.json()
-          const courses = data.courses || []
+        const data = await api.getDashboard(faculty.id)
+        const courses = data.courses || []
 
-          // Parse "Mon/Wed 10:00 AM" -> Mon: 10AM, Wed: 10AM
-          const daysMap = { 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday' }
-          const week = { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
+        const daysMap = { 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday' }
+        const week = { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
 
-          courses.forEach(c => {
-            if (!c.schedule || c.schedule === 'TBD') return
-            // Split "Mon/Wed 10:00 AM" -> ["Mon/Wed", "10:00", "AM"]
-            const parts = c.schedule.split(' ')
-            if (parts.length < 2) return
+        courses.forEach(c => {
+          if (!c.schedule || c.schedule === 'TBD') return
+          const parts = c.schedule.split(' ')
+          if (parts.length < 2) return
 
-            const daysPart = parts[0] // Mon or Mon/Wed
-            const timePart = parts.slice(1).join(' ') // 10:00 AM
+          const daysPart = parts[0]
+          const timePart = parts.slice(1).join(' ')
 
-            const days = daysPart.split('/')
-            days.forEach(d => {
+          const days = daysPart.split('/')
+          days.forEach(d => {
               const cleanDay = d.trim()
               const fullDay = daysMap[cleanDay]
               if (fullDay && week[fullDay]) {
@@ -41,7 +38,6 @@ export default function Schedule({ faculty }) {
             })
           })
 
-          // Sort by time (simple filtered sort)
           Object.keys(week).forEach(d => {
             week[d].sort((a, b) => a.time.localeCompare(b.time))
           })
@@ -52,9 +48,8 @@ export default function Schedule({ faculty }) {
           }))
 
           setSchedule(builtSchedule)
-        }
       } catch (e) {
-        console.error(e)
+        console.error('Failed to fetch faculty schedule:', e)
       } finally {
         setLoading(false)
       }

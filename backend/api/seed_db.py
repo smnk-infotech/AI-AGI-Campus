@@ -1,6 +1,6 @@
-from backend.api.database import SessionLocal, engine, Base
-from backend.api.models_db import StudentDB, FacultyDB, AdminDB, CourseDB, EnrollmentDB, AssignmentDB, AttendanceDB
-from backend.api.auth import get_password_hash
+from .database import SessionLocal, engine, Base
+from .models_db import StudentDB, FacultyDB, AdminDB, CourseDB, EnrollmentDB, AssignmentDB, AttendanceDB
+from .auth import get_password_hash
 import uuid
 import random
 from datetime import datetime, timedelta

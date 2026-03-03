@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8001'
+import { GraduationCap } from 'lucide-react'
+import api from '../services/api'
 
 export default function Login({ setToken }) {
     const [email, setEmail] = useState('aarav.kumar@student.edu')
@@ -16,63 +16,76 @@ export default function Login({ setToken }) {
         setError('')
 
         try {
-            const formData = new URLSearchParams()
-            formData.append('username', email)
-            formData.append('password', password)
-
-            const res = await fetch(`${API_BASE}/api/auth/token`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: formData
-            })
-
-            if (!res.ok) throw new Error('Invalid credentials')
-
-            const data = await res.json()
+            const data = await api.login(email, password)
             setToken(data.access_token)
             navigate('/')
         } catch (err) {
-            setError(err.message)
+            setError(err.message || 'Invalid credentials')
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-            <form className="card" onSubmit={handleLogin} style={{ width: 400, padding: 40 }}>
-                <h2>Student Login</h2>
-                <p className="muted">Enter your credentials to access the console.</p>
-
-                {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
-
-                <div style={{ marginBottom: 15 }}>
-                    <label style={{ display: 'block', marginBottom: 5 }}>Email</label>
-                    <input
-                        className="input"
-                        style={{ width: '100%' }}
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        required
-                    />
+        <div className="login-page">
+            <div className="login-card">
+                <div className="mb-6 flex justify-center">
+                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                        <GraduationCap className="w-8 h-8 text-teal-600" />
+                    </div>
                 </div>
 
-                <div style={{ marginBottom: 20 }}>
-                    <label style={{ display: 'block', marginBottom: 5 }}>Password</label>
-                    <input
-                        className="input"
-                        type="password"
-                        style={{ width: '100%' }}
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">Student Portal</h1>
+                <p className="text-slate-500 mb-8 text-sm">Sign in to access your courses and exams</p>
 
-                <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-                    {loading ? 'Logging in...' : 'Sign In'}
-                </button>
-            </form>
+                {error && (
+                    <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleLogin} className="text-left space-y-5">
+                    <div className="form-group">
+                        <label className="label">Email Address</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            className="input"
+                            placeholder="student@university.edu"
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label className="label">Password</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            className="input"
+                            placeholder="••••••••"
+                            required
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="btn btn-primary w-full"
+                        style={{ width: '100%', justifyContent: 'center' }}
+                    >
+                        {loading ? 'Signing in...' : 'Sign In'}
+                    </button>
+                </form>
+
+                <div className="mt-8 pt-6 border-t border-slate-100">
+                    <p className="text-xs text-slate-400">Demo Access:</p>
+                    <div className="text-xs font-mono text-slate-500 mt-1">
+                        aarav.kumar@student.edu / password123
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }

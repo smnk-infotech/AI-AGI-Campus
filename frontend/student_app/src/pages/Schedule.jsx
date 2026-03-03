@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import api from '../services/api'
 
 export default function Schedule({ student }) {
   const [schedule, setSchedule] = useState([])
@@ -8,54 +9,48 @@ export default function Schedule({ student }) {
     if (!student) return
     const fetchData = async () => {
       try {
-        const res = await fetch(`http://localhost:8001/api/students/${student.id}/dashboard`)
-        if (res.ok) {
-          const data = await res.json()
-          const courses = data.schedule || [] // In student API, 'schedule' is the list of courses
+        const data = await api.getDashboard(student.id)
+        const courses = data.schedule || []
 
-          const daysMap = { 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday' }
-          const week = { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
+        const daysMap = { 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday' }
+        const week = { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
 
-          courses.forEach(c => {
-            if (!c.time || c.time === 'TBD') {
-              // console.warn("Skipping TBD", c)
-              return
+        courses.forEach(c => {
+          if (!c.time || c.time === 'TBD') {
+            return
+          }
+          const parts = c.time.split(' ')
+          if (parts.length < 2) return
+
+          const daysPart = parts[0]
+          const timePart = parts.slice(1).join(' ')
+
+          const days = daysPart.split('/')
+          days.forEach(d => {
+            const cleanDay = d.trim()
+            const fullDay = daysMap[cleanDay]
+            if (fullDay && week[fullDay]) {
+              week[fullDay].push({
+                title: c.subject,
+                time: timePart,
+                location: c.location || "TBD"
+              })
             }
-            // Parse "Mon/Wed 10:00 AM" or similar
-            const parts = c.time.split(' ')
-            if (parts.length < 2) return
-
-            const daysPart = parts[0] // Mon/Wed
-            const timePart = parts.slice(1).join(' ') // 10:00 AM
-
-            const days = daysPart.split('/')
-            days.forEach(d => {
-              const cleanDay = d.trim()
-              const fullDay = daysMap[cleanDay]
-              if (fullDay && week[fullDay]) {
-                week[fullDay].push({
-                  title: c.subject,
-                  time: timePart,
-                  location: c.location || "TBD"
-                })
-              }
-            })
           })
+        })
 
-          // Sort by time
-          Object.keys(week).forEach(d => {
-            week[d].sort((a, b) => a.time.localeCompare(b.time))
-          })
+        Object.keys(week).forEach(d => {
+          week[d].sort((a, b) => a.time.localeCompare(b.time))
+        })
 
-          const builtSchedule = Object.keys(week).map(d => ({
-            day: d,
-            sessions: week[d]
-          }))
+        const builtSchedule = Object.keys(week).map(d => ({
+          day: d,
+          sessions: week[d]
+        }))
 
-          setSchedule(builtSchedule)
-        }
+        setSchedule(builtSchedule)
       } catch (e) {
-        console.error(e)
+        console.error('Failed to fetch schedule:', e)
       } finally {
         setLoading(false)
       }

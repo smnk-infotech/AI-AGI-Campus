@@ -20,9 +20,17 @@ class CourseCreate(BaseModel):
 class EnrollmentCreate(BaseModel):
     student_id: str
 
-@router.get("/", response_model=List[dict])
+class CourseResponse(CourseCreate):
+    id: str
+    credits: int
+    location: str
+    fee: int
+
+    class Config:
+        from_attributes = True
+
+@router.get("/", response_model=List[CourseResponse])
 def list_courses(db: Session = Depends(get_db)):
-    # Simple list, could add response_model schema later
     return db.query(CourseDB).all()
 
 @router.post("/")
@@ -60,7 +68,7 @@ def enroll_student(course_id: str, payload: EnrollmentCreate, db: Session = Depe
     db.commit()
     return {"message": "Enrolled successfully"}
 
-@router.get("/my/{student_id}")
+@router.get("/my/{student_id}", response_model=List[CourseResponse])
 def my_courses(student_id: str, db: Session = Depends(get_db)):
     # Join enrollments and courses
     results = db.query(CourseDB).join(EnrollmentDB, CourseDB.id == EnrollmentDB.course_id)\

@@ -64,7 +64,7 @@ export default function Assignments({ student }) {
   return (
     <div className="page">
       <section className="page-section">
-        <article className="card">
+        <article className="card-animated fade-in-up" style={{ animationDelay: '0.1s' }}>
           <header className="section-header">
             <h3>Upcoming</h3>
           </header>
@@ -95,7 +95,7 @@ export default function Assignments({ student }) {
       </section>
 
       <section className="page-section">
-        <article className="card">
+        <article className="card-animated fade-in-up" style={{ animationDelay: '0.2s' }}>
           <header className="section-header">
             <h3>Recently Closed</h3>
           </header>

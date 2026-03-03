@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import api from '../services/api'
 
 const projects = [
   {
@@ -58,20 +59,10 @@ export default function Research() {
     setLoading(true)
 
     try {
-      const res = await fetch('http://localhost:8001/api/ai/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'You are an advanced academic research assistant. Help with grants, papers, and data analysis. Be formal, precise, and cite simulated sources if asked.' },
-            ...messages,
-            newMsg
-          ]
-        })
-      })
-      const data = await res.json()
+      const data = await api.sendAIMessage(input, 'faculty')
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply, actions: data.actions }])
     } catch (e) {
+      console.error('Failed to send message:', e)
       setMessages(prev => [...prev, { role: 'assistant', content: "Connection error. Please ensure the AI Neuro-Link is active." }])
     } finally {
       setLoading(false)
