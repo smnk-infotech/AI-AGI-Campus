@@ -67,7 +67,7 @@ export default function AIAssistant() {
   const [convos, setConvos] = useState(() => {
     const initial = loadConvos()
     if (initial.length) return initial
-    const first = { id: uid(), title: 'New chat', createdAt: Date.now(), updatedAt: Date.now(), messages: [{ role: 'assistant', content: "Hi! I'm your study assistant. Ask me about your courses or assignments." }] }
+    const first = { id: uid(), title: 'New chat', createdAt: Date.now(), updatedAt: Date.now(), messages: [] }
     saveConvos([first])
     return [first]
   })
@@ -81,7 +81,35 @@ export default function AIAssistant() {
   const [kitLoading, setKitLoading] = useState(false)
   const [kitError, setKitError] = useState('')
   const [kitTab, setKitTab] = useState('summary')
+  const [studentProfile, setStudentProfile] = useState(null)
   const endRef = useRef(null)
+
+  // ── Fetch student profile on mount for personalized greeting ──
+  useEffect(() => {
+    const token = localStorage.getItem('student_token')
+    if (!token) return
+    fetch(`${API_BASE}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setStudentProfile(data)
+          // Send a welcome message if this is a fresh first conversation
+          setConvos(prev => {
+            const first = prev[0]
+            if (first && first.messages.length === 0) {
+              const name = data.first_name || data.name || 'there'
+              const greeting = {
+                role: 'assistant',
+                content: `Hi ${name}! 👋 I'm your personal AI Study Assistant. I know your courses, grades, and schedule — ask me anything about your academics, study tips, or assignments!`
+              }
+              return prev.map(c => c.id === first.id ? { ...c, messages: [greeting] } : c)
+            }
+            return prev
+          })
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [active?.messages, loading])
   useEffect(() => { saveConvos(convos) }, [convos])
@@ -111,16 +139,20 @@ export default function AIAssistant() {
 
     const ctrl = new AbortController()
     setController(ctrl)
+    const token = localStorage.getItem('student_token')
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    
     try {
       setLoading(true)
       const res = await fetch(`${API_BASE}/api/ai/messages`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers,
         body: JSON.stringify({ messages: [...active.messages, userMsg] }), signal: ctrl.signal
       })
       if (!res.ok) throw new Error(`Request failed: ${res.status}`)
       const data = await res.json()
       const reply = data.reply || '(No response)'
-      const actions = data.actions || [] // Capture actions
+      const actions = data.actions || []
 
       updateActive(c => ({ ...c, messages: [...c.messages, { role: 'assistant', content: reply, actions: actions }] }))
     } catch (e) {
@@ -143,10 +175,13 @@ export default function AIAssistant() {
     if (!lastUser) return
     const ctrl = new AbortController()
     setController(ctrl)
+    const token = localStorage.getItem('student_token')
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
     try {
       setLoading(true)
       const res = await fetch(`${API_BASE}/api/ai/messages`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers,
         body: JSON.stringify({ messages: [...active.messages.filter(m => m.role !== 'assistant').slice(0, -1), lastUser] }), signal: ctrl.signal
       })
       if (!res.ok) throw new Error(`Request failed: ${res.status}`)

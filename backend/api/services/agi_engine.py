@@ -167,12 +167,21 @@ class AGIBrain:
 
         tool_desc = self.registry.get_tool_descriptions()
         
+        # ── Build personalized prompt if user context provided ──
+        personalized_intro = ""
+        if "personalized_system_prompt" in context_data:
+            personalized_intro = context_data["personalized_system_prompt"]
+        
+        # Clean context for display (remove the large system prompt from serialized context)
+        display_context = {k: v for k, v in context_data.items() if k != "personalized_system_prompt"}
+        
         # 1. Thought Step
         prompt = f"""
-        You are the AGI Campus Controller.
+        {personalized_intro if personalized_intro else "You are the AGI Campus Controller."}
+        
         GOAL: {goal}
         MODULE: {module.upper()}
-        CONTEXT: {json.dumps(context_data)[:1000]}
+        CONTEXT: {json.dumps(display_context)[:2000]}
         
         AVAILABLE TOOLS:
         {tool_desc}
@@ -191,6 +200,8 @@ class AGIBrain:
             "thought": "I have enough info.",
             "final_answer": "The answer is..."
         }}
+        
+        IMPORTANT: Personalize your response using the user profile data above. Address the user by name.
         """
 
         try:

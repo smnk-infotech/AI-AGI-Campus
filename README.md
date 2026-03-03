@@ -2,90 +2,362 @@
 
 ### **Vision: The Autonomous University of 2030**
 This project represents a **paradigm shift** in educational management. It is not just a Learning Management System (LMS); it is an **Autonomous Campus Operating System**. By integrating **Artificial General Intelligence (AGI)** into the core of campus operations, we aim to create a self-optimizing educational environment where:
--   **Students** receive 24/7 personalized tutoring and wellbeing support.
--   **Faculty** are empowered by AI research assistants and automated administrative tasks.
--   **Administrators** possess "God Mode" oversight with predictive analytics and simulating policy changes before implementation.
+-   **Students** receive 24/7 personalized tutoring, learning kits, and wellbeing support from a real AI assistant.
+-   **Faculty** are empowered by an AI research copilot, automated advising, and course management tools.
+-   **Parents** get transparent visibility into their child's attendance, academics, and communication with faculty.
+-   **Administrators** possess "God Mode" AGI oversight with real-time campus intelligence, predictive analytics, broadcast alerts, and the ability to simulate policy changes before implementation.
 
 ---
 
 ## 🏗️ System Architecture
-The platform is built as a **multi-tenant, distributed application** ensuring security, scalability, and role-specific user experiences.
+
+The platform is built as a **multi-tenant, distributed application** with **6 frontend portals**, a **FastAPI backend**, and a **Gemini-powered AGI Brain**.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        FRONTEND (React 18 + Vite)                   │
+│                                                                     │
+│  Homepage:5173  Student:5174  Faculty:5175  Parent:5176  Admin:5177  │
+└─────────────────────┬───────────────────────────────────────────────┘
+                      │  HTTP / JWT Auth
+┌─────────────────────▼───────────────────────────────────────────────┐
+│                   BACKEND (FastAPI + Uvicorn)  :8001                 │
+│                                                                     │
+│  8 Routers │ 33 API Endpoints │ OAuth2 JWT │ CORS │ Swagger /docs   │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │              AGI Brain (ReAct Agent)                         │    │
+│  │  Google Gemini 2.5 Flash │ 6 Tools │ RBAC │ Memory │ Logs   │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │              SQLite Database (campus.db)                     │    │
+│  │  10 Tables │ SQLAlchemy ORM │ Relational Integrity           │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ### **Core Components**
-1.  **Central Intelligence (Backend)**: A high-performance Python FastAPI server that manages the `campus.db` (SQLite) relational database and orchestrates AI agents.
-2.  **Role-Specific Portals**: Three distinct React applications tailored for Students, Faculty, and Administrators.
-3.  **The AGI Brain**: A dedicated service layer powered by **Google Gemini 2.5 Flash** (with robust simulation fallback) that handles complex reasoning, natural language understanding, and predictive modeling.
+1.  **Central Intelligence (Backend)**: A high-performance Python FastAPI server that manages the `campus.db` (SQLite) relational database, serves 33 REST API endpoints across 8 routers, and orchestrates AI agents.
+2.  **Role-Specific Portals**: 5 distinct React applications tailored for Students, Faculty, Administrators, Parents, and a public Homepage — plus a static website home.
+3.  **The AGI Brain**: A dedicated service layer powered by **Google Gemini 2.5 Flash** with a ReAct (Reason + Act) reasoning loop, 6 registered tools with role-based access control (RBAC), persistent memory, and complete decision logging.
+
+---
+
+## 🔑 API Key — What This Project Needs
+
+This entire project runs on **one single API key**:
+
+| Key | Provider | Model | How to Get It |
+|-----|----------|-------|---------------|
+| `GOOGLE_API_KEY` | Google AI (Gemini) | `gemini-2.5-flash` | Free at [Google AI Studio](https://aistudio.google.com/apikey) |
+
+**One key powers everything** — student AI chat, faculty research copilot, admin AGI controller, learning kit generation, campus intelligence, broadcast alerts, and all tool-based ReAct reasoning.
+
+**Setup**: Create a file at `backend/api/.env`:
+```env
+GOOGLE_API_KEY=your_google_gemini_api_key_here
+```
+
+> No OpenAI key, no Azure key, no separate database credentials. The backend loads this key at startup via `python-dotenv` and configures both the direct chat endpoints and the AGI Brain automatically. If the key is missing, the system falls back to **Simulation Mode** so nothing crashes.
 
 ---
 
 ## 🚀 Key Features by Portal
 
-### 🎓 Student Portal (`student_app`)
-*Empowering learners with autonomy and intelligence.*
--   **AI Study Assistant**: A persistent chat interface that remembers context, helps with homework, and generates personalized **Learning Kits**.
--   **Face Verification Attendance**: Next-gen attendance system using webcam-based face recognition (verified against backend logic).
--   **Real-Time Schedule**: Dynamic weekly schedule fetching time slots directly from active course enrollments.
--   **Interactive Assignments**: View upcoming work, track deadlines, and simulate submission flows with state persistence.
--   **Holistic Wellbeing**: Integrated "Support Circle" and dynamic "Daily Inspiration" to support mental health.
+### 🎓 Student Portal (`student_app` — Port 5174)
+*Empowering learners with real AI intelligence.*
 
-### 👩‍🏫 Faculty Portal (`faculty_app`)
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | Dashboard | GPA, attendance %, credits, schedule, system alerts |
+| `/courses` | Courses | Enrolled courses with real-time data from backend |
+| `/assignments` | Assignments | View upcoming work, track deadlines, submission flows |
+| `/schedule` | Schedule | Dynamic weekly schedule from active enrollments |
+| `/attendance` | Attendance | Face-recognition attendance with history |
+| `/assistant` | AI Assistant | Full-featured ChatGPT-style AI with Learning Kits |
+| `/wellbeing` | Wellbeing | Support Circle and Daily Inspiration |
+
+**Key Features:**
+-   **AI Study Assistant (ChatGPT UI)**: Persistent dark-themed chat interface with conversation history (localStorage), markdown rendering, copy/feedback buttons. Connects to real Gemini API.
+-   **Learning Kit Generator**: Ask the AI to teach any topic and get flashcards, quiz questions, visual aids, and curated resources — all AI-generated.
+-   **Face Verification Attendance**: Webcam-based face recognition with backend attendance tracking.
+-   **Real-Time Schedule**: Fetches time slots from actual course enrollments in the database.
+
+### 👩‍🏫 Faculty Portal (`faculty_app` — Port 5175)
 *Augmenting research and instruction.*
--   **Research Copilot**: An advanced AI agent designed to assist with grant writing, literature reviews, and experiment planning.
--   **Dynamic Advising Dashboard**: Automatically fetches and lists **real students** enrolled in the faculty's courses for targeted mentorship.
--   **Course Command Center**: Create and manage courses with instant availability to the student body.
--   **Automated Grading**: (Beta) AI-assisted grading workflows to reduce administrative burden.
 
-### 🏢 Admin Portal (`admin_app`)
-*Total operational awareness.*
--   **AGI "God Mode" Controller**: A conversational command interface. Ask *"How is the CS department performing?"* or *"Simulate a 10% enrollment increase"* and get data-backed answers.
--   **Global Operations Dashboard**: Live telemetry on active users, pending fees, and attendance anomalies.
--   **Pattern Detection**: The system autonomously flags at-risk students or underperforming departments.
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | Dashboard | Courses taught, students reached, assignments, KPIs |
+| `/courses` | Courses | Create and manage courses |
+| `/assignments` | Assignments | Create, view, delete assignments |
+| `/schedule` | Schedule | Faculty teaching schedule |
+| `/advising` | Advising | Real students enrolled in faculty's courses |
+| `/research` | Research | AI Research Copilot for grant writing and literature reviews |
+
+**Key Features:**
+-   **Research Copilot**: AI agent for grant writing, literature reviews, experiment planning.
+-   **Dynamic Advising**: Automatically fetches **real students** enrolled in the faculty's courses from the database.
+-   **Course Command Center**: Create and manage courses with instant student access.
+
+### 🏢 Admin Portal (`admin_app` — Port 5177)
+*Total operational awareness — "God Mode".*
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/dashboard` | Dashboard | Executive analytics with KPIs, alerts, revenue |
+| `/students` | Students | Full student management CRUD |
+| `/staff` | Staff | Faculty/staff management |
+| `/operations` | Operations | Operational management |
+| `/reports` | Reports | Analytics and reporting |
+| `/agi` | AGI Controller | **Full AGI Organization Command Center** |
+
+**Key Features:**
+-   **AGI Organization Controller (6 Tabs)**:
+    -   **Command Center**: Chat with the AGI Brain using admin-level tools. Ask *"How is attendance this week?"* or *"Simulate a fee increase"* and get data-backed answers with visible tool usage.
+    -   **Org Overview**: Real-time campus-wide stats (students, faculty, courses, attendance rate, revenue, at-risk count, AGI activity).
+    -   **Student Intel**: Per-student attendance, grades, enrollment, and risk-status analysis.
+    -   **Faculty Intel**: Per-faculty workload (courses, students reached) analysis.
+    -   **AGI Logs**: Full audit trail of every AGI decision (goal, analysis, decision, confidence, timestamp).
+    -   **Broadcasts**: Send system-wide alerts to all users, view notification history.
+-   **Pattern Detection**: Automatically flags at-risk students (attendance < 75%).
+-   **Grade Management**: Direct grade updates for any student enrollment.
+
+### 👨‍👩‍👦 Parent Portal (`parent_app` — Port 5176)
+*Transparent visibility into student progress.*
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | Dashboard | Child's overview and quick stats |
+| `/attendance` | Attendance | View child's attendance history |
+| `/academics` | Academics | Grades and course progress |
+| `/communication` | Communication | Messages and alerts from faculty |
+| `/finance` | Finance | Fee tracking and payment status |
+
+### 🏠 Homepage (`homepage` — Port 5173)
+*Public university gateway.*
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | Home | University landing page |
+| `/features` | Features | Platform feature showcase |
+| `/about` | About | About the university |
+| `/portal` | Login | Role-based login portal |
+
+---
+
+## 🧠 AGI Brain — Deep Dive
+
+The AGI Brain (`backend/api/services/agi_engine.py`) implements a **ReAct (Reason + Act) agent** powered by Google Gemini 2.5 Flash.
+
+### **Architecture**
+```
+User Goal → System Prompt + Tool Descriptions → Gemini LLM
+    ↓
+  THOUGHT (reasoning about what to do)
+    ↓
+  ACTION (calls a tool with arguments)  ←── or ──→  FINAL ANSWER
+    ↓
+  OBSERVATION (tool result)
+    ↓
+  2nd LLM Pass (incorporate observation)
+    ↓
+  FINAL ANSWER (returned to user)
+    ↓
+  All decisions logged to AGILogs table
+```
+
+### **6 Registered AGI Tools**
+
+| Tool | Description | Uses DB | RBAC Roles |
+|------|-------------|---------|------------|
+| `get_student_info` | Fetch student profile, enrolled courses, and attendance records | Yes | student, faculty, admin |
+| `check_attendance_stats` | Calculate campus-wide attendance rate from real data | Yes | admin, faculty |
+| `simulate_event` | Predict the outcome of a policy change or campus event | No | admin |
+| `remember_fact` | Store a user preference or fact to long-term AGI memory | Yes | Public |
+| `recall_context` | Recall past facts by category from AGI memory | Yes | Public |
+| `broadcast_alert` | Send a system-wide notification to all users | Yes | admin |
+
+### **System Prompt**
+The AGI Brain uses an advanced multi-agent debate prompt (`SMART_CAMPUS_BRAIN_PROMPT`) where internal agents (Student Agent, Faculty Agent, Admin Agent, Analytics Agent) debate before reaching a decision. The reasoning loop follows: **OBSERVE → ANALYZE → DEBATE → DECIDE → EXPLAIN → LOG → MONITOR**.
+
+### **Lazy Model Initialization**
+The Gemini model is initialized lazily via `_ensure_model()` — it only loads after `main.py` has loaded the `.env` file, ensuring the API key is always available.
+
+---
+
+## 📡 Complete API Reference (33 Endpoints)
+
+### Root
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | Welcome message |
+| `GET` | `/health` | Health check — `{"status": "ok"}` |
+
+### Auth (`/api/auth`)
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/auth/token` | OAuth2 login (checks Students → Faculty → Admins), returns JWT with role |
+| `GET` | `/api/auth/me` | Get current authenticated user profile |
+
+### AI (`/api/ai`) — *All powered by Gemini 2.5 Flash*
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/ai/chat` | Simple single-turn chat |
+| `POST` | `/api/ai/messages` | Multi-turn conversation via AGI Brain |
+| `POST` | `/api/ai/agi` | Goal-oriented AGI reasoning (ReAct with tool use) |
+| `POST` | `/api/ai/teach` | Generate Learning Kit (flashcards, quiz, visuals, resources) |
+
+### Admin (`/api/admin`)
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/admin/dashboard` | Full admin dashboard (stats, events, alerts) |
+| `POST` | `/api/admin/grades` | Update a student's grade |
+| `GET` | `/api/admin/alerts` | System alerts (low-attendance risk students) |
+| `GET` | `/api/admin/agi/status` | Real-time campus intelligence snapshot |
+| `GET` | `/api/admin/agi/logs` | AGI decision audit trail |
+| `GET` | `/api/admin/agi/notifications` | All broadcast notifications |
+| `POST` | `/api/admin/agi/broadcast` | Send system-wide alert |
+| `POST` | `/api/admin/agi/command` | Execute a goal through AGI Brain (admin tools) |
+| `GET` | `/api/admin/agi/students-overview` | Per-student analysis (attendance, grades, risk) |
+| `GET` | `/api/admin/agi/faculty-overview` | Per-faculty workload analysis |
+
+### Courses (`/api/courses`)
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/courses/` | List all courses |
+| `POST` | `/api/courses/` | Create a course |
+| `POST` | `/api/courses/{course_id}/enroll` | Enroll student in course |
+| `GET` | `/api/courses/my/{student_id}` | Get student's enrolled courses |
+
+### Students (`/api/students`)
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/students/{student_id}/dashboard` | Full student dashboard |
+| `GET` | `/api/students/` | List all students |
+| `POST` | `/api/students/` | Create student |
+| `GET` | `/api/students/{student_id}` | Get student by ID |
+| `PUT` | `/api/students/{student_id}` | Update student |
+| `DELETE` | `/api/students/{student_id}` | Delete student |
+
+### Faculty (`/api/faculty`)
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/faculty/{faculty_id}/dashboard` | Faculty dashboard |
+| `GET` | `/api/faculty/{faculty_id}/advisees` | Students in faculty's courses |
+| `GET` | `/api/faculty/` | List all faculty |
+| `POST` | `/api/faculty/` | Create faculty |
+| `GET` | `/api/faculty/{faculty_id}` | Get faculty by ID |
+| `PUT` | `/api/faculty/{faculty_id}` | Update faculty |
+| `DELETE` | `/api/faculty/{faculty_id}` | Delete faculty |
+
+### Assignments (`/api/assignments`)
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/assignments/` | List all assignments |
+| `POST` | `/api/assignments/` | Create assignment |
+| `DELETE` | `/api/assignments/{assignment_id}` | Delete assignment |
+
+### Attendance (`/api/attendance`)
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/attendance/` | List all attendance records |
+| `POST` | `/api/attendance/` | Mark attendance (one per student per day) |
+| `GET` | `/api/attendance/student/{student_id}` | Student attendance history |
+
+---
+
+## 🗄️ Database Schema (10 Tables)
+
+Database: **SQLite** (`campus.db`) via **SQLAlchemy ORM**
+
+| Table | Model | Key Columns |
+|-------|-------|-------------|
+| `students` | `StudentDB` | id, first_name, last_name, email, major, year, hashed_password |
+| `faculty` | `FacultyDB` | id, first_name, last_name, email, department, hashed_password |
+| `admins` | `AdminDB` | id, first_name, last_name, email, hashed_password |
+| `courses` | `CourseDB` | id, name, code, description, faculty_id, schedule, credits, location, fee |
+| `enrollments` | `EnrollmentDB` | id, student_id, course_id, enrollment_date, grade |
+| `attendance` | `AttendanceDB` | id, student_id, date, status (Present/Absent/Late), method (Manual/FaceRec) |
+| `assignments` | `AssignmentDB` | id, title, course_id, due_date, description, total_points |
+| `agi_memory` | `AGIMemory` | id, user_id, role, context_type (conversation/preference/fact), content, timestamp |
+| `agi_logs` | `AGILogs` | id, timestamp, goal, context_summary, analysis, decision, explanation, confidence, module |
+| `notifications` | `NotificationDB` | id, sender_role, message, target_role, timestamp |
 
 ---
 
 ## 🛠️ Technology Stack
 
-### **Frontend Infrastructure** (Modern React Monorepo)
--   **Framework**: React 18 + Vite (Lightning-fast builds)
--   **Styling**: Custom CSS Variables, Glassmorphism UI, Responsive Grid Layouts
--   **Routing**: React Router v6 with Role-Based Access Control
+### **Frontend**
+| Technology | Purpose |
+|------------|---------|
+| React 18 | UI framework (functional components, hooks) |
+| Vite | Build tool (HMR, lightning-fast dev server) |
+| React Router v6 | Client-side routing with role-based access |
+| ReactMarkdown + remark-gfm | AI response rendering with GitHub-flavored markdown |
+| Lucide React | Icon library |
+| Custom CSS Variables | Design system with light theme, glassmorphism |
+| localStorage | Auth token persistence, conversation history |
 
-### **Backend Infrastructure** (Async Python)
--   **API**: FastAPI (High-performance, auto-documenting)
--   **Database**: SQLite with **SQLAlchemy ORM** (Relational integrity, Foreign Keys)
--   **Authentication**: OAuth2 compliant JWT (JSON Web Tokens) with PBKDF2 hashing
--   **AI Layer**: `google-generativeai` SDK (Gemini 2.5 Flash) + Custom "Simulated Reality" fallback engine.
+### **Backend**
+| Technology | Purpose |
+|------------|---------|
+| FastAPI | High-performance async REST API with auto-docs |
+| Uvicorn | ASGI server |
+| SQLAlchemy | ORM with declarative models and relationships |
+| SQLite | File-based relational database (`campus.db`) |
+| Pydantic | Request/response validation and serialization |
+| python-jose | JWT token generation and verification (HS256) |
+| passlib | Password hashing (PBKDF2-SHA256) |
+| python-dotenv | Environment variable loading from `.env` |
+| python-multipart | OAuth2 form data parsing |
+
+### **AI / AGI Layer**
+| Technology | Purpose |
+|------------|---------|
+| google-generativeai SDK | Gemini 2.5 Flash model access |
+| ReAct Agent Pattern | Thought → Tool → Observation → Answer reasoning loop |
+| Tool Registry + RBAC | 6 tools with role-based access control |
+| AGIMemory + AGILogs | Persistent context memory and full decision audit trail |
+| Multi-Agent Debate Prompt | Internal debate between Student/Faculty/Admin/Analytics agents |
 
 ---
 
 ## ⚡ Getting Started (Local Development)
 
 ### Prerequisites
--   Node.js (v18+)
--   Python (v3.10+)
+-   **Node.js** v18+ (for frontend apps)
+-   **Python** v3.10+ (for backend)
+-   **Google API Key** (free from [AI Studio](https://aistudio.google.com/apikey))
 
 ### 1. Backend Setup
-The heart of the system.
 ```powershell
 # Navigate to backend API directory
 cd backend/api
 
-# Create/Activate Virtual Environment
+# Create and activate virtual environment
 python -m venv .venv
 .venv\Scripts\activate
 
-# Install Dependencies
+# Install all Python dependencies
 pip install -r requirements.txt
 
-# Seed Database (Populate with Demo Data)
+# Create your .env file with your API key
+echo GOOGLE_API_KEY=your_key_here > .env
+
+# Seed the database with demo data
+cd ../..
 python -m backend.api.seed_db
 
-# Start Server (Port 8001)
-python -m uvicorn backend.api.main:app --port 8001 --reload
+# Start the backend server on port 8001
+python -m uvicorn backend.api.main:app --host 127.0.0.1 --port 8001
 ```
 
+> **Note**: Do NOT use `--reload` flag if you have `.venv` inside the project directory — WatchFiles will detect `site-packages` changes and crash in a loop. Run without `--reload` for stability.
+
 ### 2. Frontend Setup
-Launch the four portals in separate terminals.
+Open 4 separate terminals and launch each portal:
 
 **Homepage** (Port 5173):
 ```powershell
@@ -93,7 +365,6 @@ cd frontend/homepage
 npm install
 npm run dev
 ```
-*   **Purpose**: Main university portal with role-based navigation
 
 **Student App** (Port 5174):
 ```powershell
@@ -101,7 +372,6 @@ cd frontend/student_app
 npm install
 npm run dev
 ```
-*   **Login**: `aarav.kumar@student.edu` / `password123`
 
 **Faculty App** (Port 5175):
 ```powershell
@@ -109,7 +379,6 @@ cd frontend/faculty_app
 npm install
 npm run dev
 ```
-*   **Login**: `dr.gupta@faculty.edu` / `password123`
 
 **Admin App** (Port 5177):
 ```powershell
@@ -117,196 +386,267 @@ cd frontend/admin_app
 npm install
 npm run dev
 ```
-*   **Login**: `admin@campus.edu` / `admin123`
+
+### 3. Quick Start (One Command)
+```powershell
+.\start_campus.bat
+```
+This launches the backend and all frontend portals automatically.
+
+### **Test Credentials**
+| Role | Email | Password | Portal |
+|------|-------|----------|--------|
+| Admin | `admin@campus.edu` | `admin123` | `http://localhost:5177` |
+| Faculty | `dr.gupta@faculty.edu` | `password123` | `http://localhost:5175` |
+| Student | `aarav.kumar@student.edu` | `password123` | `http://localhost:5174` |
+| Student | `priya@student.edu` | `password123` | `http://localhost:5174` |
+| Faculty | `prof.dave@faculty.edu` | `password123` | `http://localhost:5175` |
+
+### **Seeded Demo Data**
+| Entity | Details |
+|--------|---------|
+| **Faculty** | Dr. Gupta (CS Dept, `fac-001`) · Prof. Dave (Robotics Dept, `fac-002`) |
+| **Students** | Aarav Kumar (Robotics, Year 8) · Priya Singh (CS, Year 8) |
+| **Admin** | Campus Admin (`adm-001`) |
+| **Courses** | AI 101 (3 credits, $750) · Robotics 101 (4 credits, $900) · Ethics 200 (2 credits, $400) |
+| **Enrollments** | Aarav → AI101 (4.0), ROB101 (3.5) · Priya → AI101 (3.0), ETH200 (4.0) |
+| **Assignments** | "Neural Net Essay" (due +2 days) · "Build Servo Arm" (due +5 days) |
+| **Attendance** | Aarav: 5 recent days (random Present/Late via FaceRec) |
 
 ---
 
 ## 📂 Project Structure
 ```text
-root/
+AI-AGI-Campus/
+│
 ├── backend/
 │   └── api/
-│       ├── routers/          # REST API Endpoints (Auth, AI, Courses...)
-│       ├── services/         # Business Logic & AGI Engine
-│       ├── models_db.py      # Database Schema (SQLAlchemy)
-│       └── main.py           # Application Entry Point
+│       ├── .env                  # API key configuration (GOOGLE_API_KEY)
+│       ├── main.py               # FastAPI app entry point, CORS, router registration
+│       ├── database.py           # SQLAlchemy engine, SessionLocal, Base
+│       ├── models_db.py          # All 10 database models (SQLAlchemy)
+│       ├── auth.py               # JWT utilities, password hashing, token verification
+│       ├── prompts.py            # AGI system prompt (multi-agent debate)
+│       ├── requirements.txt      # Python dependencies
+│       ├── seed_db.py            # Database seeder (faculty, students, courses, etc.)
+│       ├── routers/
+│       │   ├── auth.py           # POST /api/auth/token, GET /api/auth/me
+│       │   ├── ai.py             # POST /api/ai/chat, messages, agi, teach
+│       │   ├── admin.py          # GET/POST /api/admin/* (dashboard, AGI controller)
+│       │   ├── courses.py        # CRUD /api/courses/*
+│       │   ├── students.py       # CRUD /api/students/*
+│       │   ├── faculty.py        # CRUD /api/faculty/*
+│       │   ├── assignments.py    # CRUD /api/assignments/*
+│       │   └── attendance.py     # /api/attendance/* (mark, history)
+│       └── services/
+│           └── agi_engine.py     # AGI Brain: ReAct agent, tools, RBAC, memory
+│
 ├── frontend/
-│   ├── homepage/             # Main University Portal (Port 5173)
-│   ├── student_app/          # Student Experience React App (Port 5174)
-│   ├── faculty_app/          # Faculty Experience React App (Port 5175)
-│   └── admin_app/            # Operations Control React App (Port 5177)
-├── docs/                     # Project Documentation
-├── campus.db                 # Persistent SQLite Database
-├── start_campus.bat          # Quick Start Script
-├── health_check.ps1          # System Health Monitoring Script
-└── README.md                 # This Documentation
+│   ├── homepage/                 # Public landing page (Port 5173)
+│   │   └── src/
+│   │       ├── App.jsx           # Routes: /, /features, /about, /portal
+│   │       └── pages/            # Home, Features, About
+│   │
+│   ├── student_app/              # Student portal (Port 5174)
+│   │   └── src/
+│   │       ├── App.jsx           # Routes: /, /courses, /assignments, /schedule, /attendance, /assistant, /wellbeing
+│   │       ├── chatgpt.css       # Dark-themed ChatGPT-style AI assistant styles
+│   │       └── pages/            # Dashboard, Courses, Assignments, Schedule, Attendance, AIAssistant, Wellbeing
+│   │
+│   ├── faculty_app/              # Faculty portal (Port 5175)
+│   │   └── src/
+│   │       ├── App.jsx           # Routes: /, /courses, /assignments, /schedule, /advising, /research
+│   │       └── pages/            # Dashboard, Courses, Assignments, Schedule, Advising, Research
+│   │
+│   ├── parent_app/               # Parent portal (Port 5176)
+│   │   └── src/
+│   │       ├── App.jsx           # Routes: /, /attendance, /academics, /communication, /finance
+│   │       └── pages/            # Dashboard, Attendance, Academics, Communication, Finance
+│   │
+│   ├── admin_app/                # Admin portal (Port 5177)
+│   │   └── src/
+│   │       ├── App.jsx           # Routes: /dashboard, /students, /staff, /operations, /reports, /agi
+│   │       └── pages/            # Dashboard, Students, Staff, Operations, Reports, AGIController
+│   │
+│   └── website_home/             # Static website (optional)
+│
+├── docs/
+│   ├── project_overview.md       # Architecture overview
+│   ├── modules.md                # Module documentation
+│   ├── tech_stack.md             # Technology details
+│   └── PROJECT_STATUS.md         # Current status tracking
+│
+├── campus.db                     # SQLite database (auto-created on startup)
+├── start_campus.bat              # One-command full system launcher
+├── health_check.ps1              # PowerShell system health monitor
+├── CAMPUS_DESIGN_SYSTEM.css      # Shared CSS design system variables
+├── CONTRIBUTING.md               # Contribution guidelines
+├── CODE_OF_CONDUCT.md            # Community standards
+├── SECURITY.md                   # Security policy
+├── LICENSE                       # Project license
+└── README.md                     # This documentation
 ```
-
-## ✅ Project Status (January 30, 2026)
-This project is **FULLY OPERATIONAL** and production-ready with enhanced UI/UX across all portals.
-
-### **System Health: 🟢 ALL SYSTEMS OPERATIONAL**
--   [x] **Full-Stack Integration**: Frontend <-> Backend <-> Database with real-time data
--   [x] **Enhanced UI/UX**: Modern, professional dashboards with interactive elements and smooth animations
--   [x] **AGI Integration**: AI agents deployed and functional across all portals with simulation fallback
--   [x] **Multi-Portal Architecture**: 4 distinct React applications (Homepage, Student, Faculty, Admin)
--   [x] **Authentication & Security**: JWT-based auth with role-based access control
--   [x] **Database**: SQLite with SQLAlchemy ORM, populated with comprehensive test data
--   [x] **API Documentation**: FastAPI auto-documenting endpoints available at `/docs`
--   [x] **Cross-Origin Support**: CORS configured for all frontend applications
--   [x] **Code Quality**: CSS linting errors resolved, clean and maintainable codebase
-
-### **Recent Enhancements (Jan 2026)**
--   **Homepage Portal**: Modern university gateway with role-based navigation and professional branding
--   **Student Dashboard**: Personalized interface with progress tracking, AGI chat, and interactive schedule
--   **Faculty Dashboard**: Productivity-focused design with quick actions, KPI cards, and system monitoring
--   **Admin Dashboard**: Executive analytics with interactive KPIs, real-time alerts, and AI recommendations
--   **System Monitoring**: Health checks and comprehensive status verification implemented
-
-### **Quick Start**
-Run `start_campus.bat` to launch the entire system automatically, or follow the manual setup above.
 
 ---
 
 ## 🔍 System Monitoring & Health Checks
 
 ### **Health Endpoints**
-- **API Health**: `GET /health` - Returns `{"status": "ok"}`
-- **API Documentation**: `GET /docs` - Interactive Swagger UI
-- **Frontend Status**: All portals return 200 OK when healthy
+| Endpoint | URL | Expected Response |
+|----------|-----|-------------------|
+| API Health | `GET http://localhost:8001/health` | `{"status": "ok"}` |
+| API Docs | `GET http://localhost:8001/docs` | Interactive Swagger UI |
+| Homepage | `GET http://localhost:5173` | 200 OK |
+| Student App | `GET http://localhost:5174` | 200 OK |
+| Faculty App | `GET http://localhost:5175` | 200 OK |
+| Admin App | `GET http://localhost:5177` | 200 OK |
 
-### **System Verification Script**
-Run the health check script to verify all systems are operational:
+### **Health Check Script**
 ```powershell
-# PowerShell health check (recommended)
+# Run the automated health check
 .\health_check.ps1
-
-# Or run directly in PowerShell:
-Write-Host "=== AI-AGI Campus System Health Monitor ===" -ForegroundColor Cyan; Write-Host ""; Write-Host "1. Frontend Applications:" -ForegroundColor Yellow; Get-ChildItem -Path "frontend" -Directory | Where-Object { Test-Path (Join-Path $_.FullName "node_modules") } | ForEach-Object { $app = $_.Name; $port = switch($app){'homepage'{5173}'student_app'{5174}'faculty_app'{5175}'admin_app'{5177}}; Write-Host "   Checking $app on port $port..." -NoNewline; try { $result = Invoke-WebRequest -Uri "http://localhost:$port" -Method GET -TimeoutSec 5 -UseBasicParsing; Write-Host " ✓ $($result.StatusCode)" -ForegroundColor Green } catch { Write-Host " ✗ ERROR" -ForegroundColor Red } }; Write-Host ""; Write-Host "2. Backend API:" -ForegroundColor Yellow; Write-Host "   Checking Health Endpoint..." -NoNewline; try { $result = Invoke-WebRequest -Uri "http://localhost:8001/health" -Method GET -TimeoutSec 5 -UseBasicParsing; Write-Host " ✓ $($result.StatusCode)" -ForegroundColor Green } catch { Write-Host " ✗ ERROR" -ForegroundColor Red }; Write-Host ""; Write-Host "=== System Status: ALL SYSTEMS OPERATIONAL ===" -ForegroundColor Green
 ```
 
-### **Test Credentials**
-- **Admin**: `admin@campus.edu` / `admin123`
-- **Faculty**: `dr.gupta@faculty.edu` / `password123`
-- **Student**: `aarav.kumar@student.edu` / `password123`
+Expected output when all systems are running:
+```
+=== AI-AGI Campus System Health Monitor ===
+
+1. Frontend Applications:
+   Checking homepage on port 5173...       OK (200)
+   Checking student_app on port 5174...    OK (200)
+   Checking faculty_app on port 5175...    OK (200)
+   Checking admin_app on port 5177...      OK (200)
+
+2. Backend API:
+   Checking Health Endpoint (port 8001)... OK (200)
+   Checking Auth Endpoint...               OK (200)
+
+=== ALL SYSTEMS OPERATIONAL ===
+```
+
+---
+
+## ✅ Project Status (March 3, 2026)
+
+This project is **FULLY OPERATIONAL** with live Gemini AI integration across all portals.
+
+### **System Health: 🟢 ALL SYSTEMS OPERATIONAL**
+-   [x] **Full-Stack Integration**: 5 React frontends ↔ FastAPI backend ↔ SQLite database with real-time data
+-   [x] **Live AI (Gemini 2.5 Flash)**: All 4 AI endpoints verified working with real Gemini responses
+-   [x] **AGI Brain (ReAct Agent)**: Goal-oriented reasoning with tool execution, RBAC, memory, and decision logging
+-   [x] **AGI Organization Controller**: Admin "God Mode" with 6-tab command center (10 admin endpoints)
+-   [x] **Learning Kit Generator**: AI creates flashcards, quizzes, visual aids, and resources on any topic
+-   [x] **Multi-Portal Architecture**: 5 React apps (Homepage, Student, Faculty, Parent, Admin)
+-   [x] **Authentication & Security**: JWT (HS256) with OAuth2, PBKDF2 password hashing, role-based access
+-   [x] **Database**: 10 tables with SQLAlchemy ORM, relational integrity, seeded demo data
+-   [x] **API Documentation**: Swagger UI at `/docs` with all 33 endpoints documented
+-   [x] **CORS**: Configured for all 5 frontend origins
+-   [x] **Health Monitoring**: PowerShell health check script for all services
+
+### **Latest Enhancements (March 2026)**
+-   **AGI Organization Controller**: Full admin command center with real-time campus intelligence, AGI chat with tool execution, student/faculty analytics, broadcast alerts, and AGI decision logs
+-   **AI Integration Complete**: All 4 AI endpoints (`/api/ai/chat`, `/messages`, `/agi`, `/teach`) verified with real Gemini responses and tool usage
+-   **Lazy AGI Initialization**: Gemini model loads after `.env` is parsed, ensuring API key availability
+-   **Dark Theme AI Chat**: ChatGPT-style interface with preserved dark theme and markdown rendering
+-   **Campus Intelligence**: Real-time stats — attendance rates, revenue, at-risk detection, AGI activity tracking
 
 ---
 
 ## 🚀 Deployment & Production
 
-### **Production Readiness Checklist**
-- [x] All frontend applications tested and responding (200 OK)
-- [x] Backend API functional with health checks
-- [x] Database populated with test data
-- [x] Authentication system verified
-- [x] CORS configured for production domains
-- [x] CSS linting errors resolved
-- [x] Code quality standards met
-
 ### **Environment Variables**
-Create a `.env` file in `backend/api/` with:
+Create `backend/api/.env`:
 ```env
-# Database
-DATABASE_URL=sqlite:///./campus.db
-
-# AI Service (Optional - system works with simulation fallback)
+# Required — powers all AI features
 GOOGLE_API_KEY=your_google_gemini_api_key
 
-# Security
+# Optional — defaults are used if not set
 SECRET_KEY=your-secret-key-here
 ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+ACCESS_TOKEN_EXPIRE_MINUTES=300
 ```
 
-### **Production Deployment Options**
-1. **Docker Deployment**: Containerize the application for cloud deployment
-2. **Cloud Platforms**: Deploy to AWS, Azure, or Google Cloud
-3. **Database Migration**: Consider PostgreSQL for production workloads
-4. **Load Balancing**: Implement reverse proxy for multiple instances
+### **Production Checklist**
+- [x] All frontend applications tested and responding (200 OK)
+- [x] Backend API functional with health checks
+- [x] Database populated with demo data
+- [x] Authentication system verified with all 3 roles
+- [x] All 4 AI endpoints verified with real Gemini responses
+- [x] AGI Brain tool execution confirmed (ReAct loop working)
+- [x] CORS configured for all frontend origins
+- [x] Swagger documentation accessible at `/docs`
 
-### **Monitoring & Maintenance**
-- Regular health check monitoring
-- Database backup procedures
-- Log analysis for system insights
-- Performance monitoring and optimization
+### **Production Deployment Options**
+1. **Docker**: Containerize backend + frontend for cloud deployment
+2. **Cloud Platforms**: Deploy to AWS, Azure, or Google Cloud
+3. **Database Migration**: Upgrade to PostgreSQL for production workloads
+4. **Reverse Proxy**: Nginx/Caddy for SSL termination and load balancing
+5. **Environment**: Set `GOOGLE_API_KEY` as a server environment variable
 
 ---
-*© 2026 AI-AGI Campus Team. Built for the Future of Education.*
-Project Phase: Phase 2 (Enhancement & Production Readiness) Team Size: 4 Members
 
-This document outlines the specific tasks for each team member to work on in parallel using Antigravity/Copilot, and the Git workflow to ensure smooth collaboration.
+## 👥 Team Phase 2 — Role Assignments & Tasks
 
-👥 Role Assignments & Tasks
-🧑‍💻 Member 1: The AI Architect (Backend - AI Focus)
-Goal: Upgrade the "Simulated" tools in 
-agi_engine.py
- to use real reasoning data.
+**Project Phase:** Phase 2 (Enhancement & Production Readiness)
+**Team Size:** 4 Members
 
-Task 1.1 (Real Simulation): Modify 
-tool_simulate_event
-. Instead of returning a static string, make it query the 
-AttendanceDB
- and 
-EnrollmentDB
- to calculate actual impact (e.g., if simulating a "System Outage", check how many students would be affected based on schedule).
-Task 1.2 (Gemini Integration): Ensure valid API Key handling. Update the fallback logic to only trigger on 401/503 errors, not just when the key is missing. Add robust error logging to 
-AGILogs
-.
-Task 1.3 (New Tool): Add a tool_suggest_intervention that scans 
-StudentDB
- for students with GPA < 2.0 and suggests specific study plans.
-🎨 Member 2: The Frontend Lead (UI/UX)
-Goal: Enhance the user experience and visual feedback mechanism.
+### 🧑‍💻 Member 1: The AI Architect (Backend - AI Focus)
+**Goal:** Upgrade the AGI tools in `agi_engine.py` to use real reasoning data.
+- **Task 1.1 (Real Simulation):** Modify `tool_simulate_event` to query `AttendanceDB` and `EnrollmentDB` for actual impact calculations.
+- **Task 1.2 (Gemini Integration):** Update fallback logic to trigger only on 401/503 errors. Add robust error logging to `AGILogs`.
+- **Task 1.3 (New Tool):** Add `tool_suggest_intervention` that scans `StudentDB` for GPA < 2.0 and suggests study plans.
 
-Task 2.1 (Offline UI Indicators): In frontend/student_app, add a visible "AI Offline / Simulation Mode" badge in the UI when the backend reports it is using fallback logic.
-Task 2.2 (Professor Dashboard): In frontend/faculty_app, replace the text list of "At Risk Students" with a visual Chart (Bar/Pie) showing the distribution of risk levels (High/Medium/Low).
-Task 2.3 (Accessibility): Run a pass on all forms (Login, Assignment Submission) to ensure they support keyboard navigation and screen readers.
-⚙️ Member 3: The Backend Engineer (Infrastructure)
-Goal: Prepare the system for deployment and scalability.
+### 🎨 Member 2: The Frontend Lead (UI/UX)
+**Goal:** Enhance user experience and visual feedback.
+- **Task 2.1 (Offline Indicators):** Add "AI Offline / Simulation Mode" badge in student app when backend uses fallback.
+- **Task 2.2 (Charts):** Replace "At Risk Students" text list with Bar/Pie chart in faculty dashboard.
+- **Task 2.3 (Accessibility):** Ensure all forms support keyboard navigation and screen readers.
 
-Task 3.1 (Dockerization): Create a Dockerfile for the Backend and a separate Dockerfile for the Frontend. Create a docker-compose.yml to spin up the whole stack with one command.
-Task 3.2 (Database Migration): Create a script to migrate from SQLite (campus.db) to PostgreSQL. Update database.py to read connection strings from .env.
-Task 3.3 (API Documentation): Enhance main.py metadata (Titles, Summaries, Response Models) so the Swagger UI (/docs) is fully descriptive for external developers.
-🛡️ Member 4: The QA & Security Lead (Testing)
-Goal: Establish a robust safety net and CI pipeline.
+### ⚙️ Member 3: The Backend Engineer (Infrastructure)
+**Goal:** Prepare the system for deployment and scalability.
+- **Task 3.1 (Dockerization):** Create Dockerfiles and `docker-compose.yml` for one-command stack deployment.
+- **Task 3.2 (DB Migration):** Script to migrate from SQLite to PostgreSQL. Update `database.py` for `.env` connection strings.
+- **Task 3.3 (API Docs):** Enhance `main.py` metadata for descriptive Swagger UI.
 
-Task 4.1 (Unit Testing): Convert the standalone verify_*.py scripts into a standard pytest suite inside a tests/ directory.
-Task 4.2 (Input Validation): Audit routers/auth.py and routers/students.py. Ensure no SQL injection or invalid data can be passed. Add Pydantic validators for Email formats and Password strength.
-Task 4.3 (CI Pipeline): Create a .github/workflows/test.yml file that automatically runs the new pytest suite and npm test whenever a teammate pushes code.
-🔄 Collaboration Workflow (Git Flow)
-Since you are all working on the same project, you MUST use branches to avoid overwriting each other's work.
+### 🛡️ Member 4: The QA & Security Lead (Testing)
+**Goal:** Establish testing and CI pipeline.
+- **Task 4.1 (Unit Testing):** Convert `verify_*.py` scripts into a `pytest` suite in `tests/` directory.
+- **Task 4.2 (Input Validation):** Audit auth and student routers. Add Pydantic validators for email/password.
+- **Task 4.3 (CI Pipeline):** Create `.github/workflows/test.yml` for automated testing on push.
 
-1. Setup (Everyone)
-Clone the repository: git clone <repo-url>
-NEVER work directly on the main (or master) branch.
-2. The Cycle (One Feature at a Time)
-Each member follows this loop for every single task:
+---
 
-Create a Branch:
-Name it descriptively: git checkout -b feature/member2-dashboard-charts
-Code with AI:
-Use Antigravity/Copilot to generate the code for your specific task.
-Example: Member 4 asks "Write a pytest test case for the login function in auth.py".
-Verify Locally:
-Run the app and make sure your specific change works.
-Run start_campus.bat to ensure you didn't break the build.
-Commit & Push:
+## 🔄 Git Collaboration Workflow
+
+### Branch Strategy
+```
+main (protected)
+  ├── feature/member1-real-simulation
+  ├── feature/member2-dashboard-charts
+  ├── feature/member3-dockerization
+  └── feature/member4-pytest-suite
+```
+
+### Development Cycle
+1. **Branch**: `git checkout -b feature/your-task-name`
+2. **Code**: Implement your task using AI assistants
+3. **Verify**: Run `.\start_campus.bat` and `.\health_check.ps1`
+4. **Commit**: `git add . && git commit -m "Description of change"`
+5. **Push**: `git push origin feature/your-task-name`
+6. **PR**: Create Pull Request on GitHub, assign reviewer
+7. **Merge**: After approval, merge to `main`
+8. **Sync**: Everyone runs `git pull origin main`
+
+### Conflict Resolution
+```powershell
+git pull origin main          # Pull latest into your branch
+# VS Code highlights conflicts
+# Choose: Accept Current / Accept Incoming / Keep Both
 git add .
-git commit -m "Added charts to faculty dashboard"
-git push origin feature/member2-dashboard-charts
-Pull Request (PR):
-Go to GitHub. You will see a "Compare & pull request" button.
-Create the PR.
-CRITICAL: Ask another member to review your code (e.g., Member 3 reviews Member 2).
-Merge:
-Once approved, merge the PR into main.
-Everyone else runs git pull origin main to get your changes.
-3. Handling Conflicts
-If two members edit the same file (e.g., models_db.py):
+git commit -m "Resolved merge conflicts"
+git push origin feature/your-branch
+```
 
-The second person to merge will get a Merge Conflict.
-How to solve:
-git pull origin main (into your branch).
-VS Code will highlight the conflict.
-Choose "Accept Current", "Accept Incoming", or "Keep Both".
-Commit the fix and push again.
+---
+
+*© 2026 AI-AGI Campus Team. Built for the Future of Education.*

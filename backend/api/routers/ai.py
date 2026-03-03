@@ -42,8 +42,217 @@ def _get_client(model_preference: str | None = None):
 
 from ..services.agi_engine import agi_brain
 from ..database import get_db
+from ..models_db import StudentDB, FacultyDB, AdminDB, CourseDB, EnrollmentDB, AttendanceDB, AssignmentDB
+from ..auth import get_current_user
 from sqlalchemy.orm import Session
 from fastapi import Depends
+from typing import Optional
+from jose import jwt as jose_jwt
+
+# ── Helper: build personalized context from JWT token ──
+def _extract_user_from_token(authorization: str | None, db: Session) -> dict:
+    """Extract user profile + academic data from JWT token for AI personalization."""
+    if not authorization:
+        return {"role": "guest", "name": "Guest User"}
+    
+    token = authorization.replace("Bearer ", "") if authorization.startswith("Bearer ") else authorization
+    try:
+        from ..auth import SECRET_KEY, ALGORITHM
+        payload = jose_jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        role = payload.get("role", "student")
+        user_id = payload.get("id")
+    except Exception:
+        return {"role": "guest", "name": "Guest User"}
+    
+    if role == "student":
+        student = db.query(StudentDB).filter(StudentDB.email == email).first()
+        if not student:
+            return {"role": "student", "name": email}
+        enrollments = db.query(EnrollmentDB).filter(EnrollmentDB.student_id == student.id).all()
+        course_ids = [e.course_id for e in enrollments]
+        courses = db.query(CourseDB).filter(CourseDB.id.in_(course_ids)).all() if course_ids else []
+        attendance = db.query(AttendanceDB).filter(AttendanceDB.student_id == student.id).all()
+        total_att = len(attendance)
+        present = sum(1 for a in attendance if a.status == "Present")
+        att_rate = round((present / total_att) * 100, 1) if total_att > 0 else 0
+        
+        grades = []
+        for e in enrollments:
+            c = next((c for c in courses if c.id == e.course_id), None)
+            if c and e.grade:
+                grades.append({"course": c.name, "code": c.code, "grade": e.grade})
+
+        assignments = []
+        for c in courses:
+            assgns = db.query(AssignmentDB).filter(AssignmentDB.course_id == c.id).all()
+            for a in assgns:
+                assignments.append({"title": a.title, "course": c.name, "due_date": a.due_date})
+        
+        gpa_sum = 0.0
+        graded = 0
+        for e in enrollments:
+            if e.grade:
+                try:
+                    gpa_sum += float(e.grade)
+                    graded += 1
+                except ValueError:
+                    pass
+        gpa = round(gpa_sum / graded, 2) if graded > 0 else 0
+
+        return {
+            "role": "student",
+            "user_id": student.id,
+            "name": f"{student.first_name} {student.last_name}",
+            "email": student.email,
+            "major": student.major or "Undeclared",
+            "year": student.year,
+            "gpa": gpa,
+            "courses": [{"name": c.name, "code": c.code, "schedule": c.schedule, "credits": c.credits} for c in courses],
+            "grades": grades,
+            "attendance_rate": att_rate,
+            "total_attendance_records": total_att,
+            "upcoming_assignments": assignments[:5],
+        }
+    
+    elif role == "faculty":
+        faculty = db.query(FacultyDB).filter(FacultyDB.email == email).first()
+        if not faculty:
+            return {"role": "faculty", "name": email}
+        courses = db.query(CourseDB).filter(CourseDB.faculty_id == faculty.id).all()
+        total_students = 0
+        course_details = []
+        for c in courses:
+            enrolled = db.query(EnrollmentDB).filter(EnrollmentDB.course_id == c.id).count()
+            total_students += enrolled
+            course_details.append({"name": c.name, "code": c.code, "enrolled": enrolled, "schedule": c.schedule, "credits": c.credits})
+        
+        return {
+            "role": "faculty",
+            "user_id": faculty.id,
+            "name": f"{faculty.first_name} {faculty.last_name}",
+            "email": faculty.email,
+            "department": faculty.department or "General",
+            "courses_teaching": course_details,
+            "total_students_reached": total_students,
+        }
+    
+    elif role == "admin":
+        admin = db.query(AdminDB).filter(AdminDB.email == email).first()
+        if not admin:
+            return {"role": "admin", "name": email}
+        total_students = db.query(StudentDB).count()
+        total_faculty = db.query(FacultyDB).count()
+        total_courses = db.query(CourseDB).count()
+        return {
+            "role": "admin",
+            "user_id": admin.id,
+            "name": f"{admin.first_name} {admin.last_name}",
+            "email": admin.email,
+            "campus_students": total_students,
+            "campus_faculty": total_faculty,
+            "campus_courses": total_courses,
+        }
+    
+    return {"role": role, "name": email}
+
+
+def _build_personalized_system_prompt(user_ctx: dict) -> str:
+    """Build a role-specific system prompt with real user data."""
+    role = user_ctx.get("role", "guest")
+    name = user_ctx.get("name", "User")
+    
+    if role == "student":
+        courses_str = ", ".join([f"{c['code']} ({c['name']})" for c in user_ctx.get("courses", [])]) or "None enrolled"
+        grades_str = ", ".join([f"{g['course']}: {g['grade']}" for g in user_ctx.get("grades", [])]) or "No grades yet"
+        assignments_str = "\n".join([f"  - {a['title']} ({a['course']}, due: {a['due_date']})" for a in user_ctx.get("upcoming_assignments", [])]) or "  None upcoming"
+        
+        return f"""You are {name}'s personal AI Study Assistant at AI-AGI Campus.
+
+STUDENT PROFILE (REAL DATA — use this to personalize every response):
+- Name: {name}
+- Major: {user_ctx.get('major', 'Undeclared')}
+- Year: {user_ctx.get('year', 'N/A')}
+- GPA: {user_ctx.get('gpa', 'N/A')}
+- Attendance Rate: {user_ctx.get('attendance_rate', 'N/A')}%
+- Enrolled Courses: {courses_str}
+- Current Grades: {grades_str}
+- Upcoming Assignments:
+{assignments_str}
+
+PERSONALIZATION RULES:
+1. Always address {name.split()[0]} by their first name.
+2. Reference their ACTUAL courses, grades, and assignments when relevant.
+3. If they ask about study tips, tailor them to their major ({user_ctx.get('major', 'their field')}).
+4. If their attendance rate is below 80%, gently encourage better attendance.
+5. If their GPA is below 3.0, offer specific study strategies.
+6. When discussing assignments, reference their REAL upcoming deadlines.
+7. Be warm, encouraging, and supportive — like a brilliant personal tutor who genuinely cares.
+8. You can help with homework, explain concepts, create study plans, and provide emotional support.
+9. Never reveal raw database IDs or technical internals to the student.
+"""
+
+    elif role == "faculty":
+        courses_str = "\n".join([f"  - {c['code']} ({c['name']}) — {c['enrolled']} students, {c['schedule']}" for c in user_ctx.get("courses_teaching", [])]) or "  No courses assigned"
+        
+        return f"""You are {name}'s personal AI Research Copilot at AI-AGI Campus.
+
+FACULTY PROFILE (REAL DATA — use this to personalize every response):
+- Name: {name}
+- Department: {user_ctx.get('department', 'General')}
+- Total Students Reached: {user_ctx.get('total_students_reached', 0)}
+- Courses Teaching:
+{courses_str}
+
+PERSONALIZATION RULES:
+1. Always address {name.split()[0]} professionally (Dr./Prof.).
+2. Reference their ACTUAL department, courses, and student count.
+3. For research help, tailor suggestions to their department ({user_ctx.get('department', 'their field')}).
+4. Help with grant writing, literature reviews, experiment planning, and curriculum design.
+5. Offer insights about their specific courses and enrolled students.
+6. Be professional, concise, and highly competent — like a brilliant research colleague.
+7. You can analyze teaching effectiveness, suggest pedagogy improvements, and assist with grading strategies.
+"""
+
+    elif role == "admin":
+        return f"""You are the AGI Campus Controller, serving administrator {name}.
+
+ADMIN PROFILE (REAL DATA):
+- Name: {name}
+- Campus Students: {user_ctx.get('campus_students', 0)}
+- Campus Faculty: {user_ctx.get('campus_faculty', 0)}
+- Campus Courses: {user_ctx.get('campus_courses', 0)}
+
+PERSONALIZATION RULES:
+1. Address {name.split()[0]} as the campus administrator.
+2. Provide data-driven insights about the entire organization.
+3. Be strategic, analytical, and comprehensive in your responses.
+4. You have access to tools for checking attendance, student info, simulations, and broadcasting alerts.
+"""
+
+    elif role == "parent":
+        child_name = user_ctx.get("child_name", "your child")
+        return f"""You are a helpful AI assistant for parent {name} at AI-AGI Campus.
+
+PARENT PROFILE (REAL DATA):
+- Parent Name: {name}
+- Child: {user_ctx.get('child_name', 'N/A')}
+- Child's Major: {user_ctx.get('child_major', 'N/A')}
+- Child's GPA: {user_ctx.get('child_gpa', 'N/A')}
+- Child's Attendance: {user_ctx.get('child_attendance', 'N/A')}%
+- Child's Courses: {user_ctx.get('child_courses', 'None')}
+
+PERSONALIZATION RULES:
+1. Address {name.split()[0]} warmly as a concerned parent.
+2. Discuss their child {child_name}'s ACTUAL academic performance.
+3. Provide helpful parenting insights related to education.
+4. Be transparent about grades, attendance, and areas of improvement.
+5. Never share other students' data — only their child's information.
+6. Offer actionable advice for how they can support their child's learning.
+"""
+
+    return f"You are a helpful AI assistant at AI-AGI Campus. The user is {name}."
+
 
 class AGIRequest(BaseModel):
     goal: str
@@ -102,15 +311,24 @@ class Message(BaseModel):
 class ChatMessagesRequest(BaseModel):
     messages: list[Message]
     model: str | None = None
+    user_context: dict | None = None  # Optional client-side context override
 
 
 class ChatMessagesResponse(BaseModel):
     reply: str
     model: str
     actions: list[dict] | None = None
+    user_profile: dict | None = None  # Echo back the detected user profile
+
+
+from fastapi import Header
 
 @router.post("/messages", response_model=ChatMessagesResponse)
-async def chat_messages(body: ChatMessagesRequest, db: Session = Depends(get_db)):
+async def chat_messages(
+    body: ChatMessagesRequest,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
     if not body.messages or not isinstance(body.messages, list):
         raise HTTPException(status_code=400, detail="messages array is required")
 
@@ -120,22 +338,36 @@ async def chat_messages(body: ChatMessagesRequest, db: Session = Depends(get_db)
         if not last_content:
             raise HTTPException(status_code=400, detail="last message has empty content")
 
-        # Use AGI Brain for full Tool capability
-        # Context building: Just pass history string for now as context
+        # ── PERSONALIZATION: Extract real user data from JWT ──
+        user_ctx = _extract_user_from_token(authorization, db)
+        role = user_ctx.get("role", "student")
+        user_id = str(user_ctx.get("user_id", "public_simulation"))
+        user_name = user_ctx.get("name", "User")
+        
+        # Build personalized system prompt with real user data
+        personalized_prompt = _build_personalized_system_prompt(user_ctx)
+        
+        # Build rich context including user profile + chat history
         history = "\n".join([f"{m.role}: {m.content}" for m in body.messages[:-1]])
+        context_data = {
+            "chat_history": history,
+            "user_profile": user_ctx,
+            "personalized_system_prompt": personalized_prompt,
+        }
         
         result = agi_brain.think(
             goal=last_content,
-            context_data={"chat_history": history},
-            module="student", # Default to student for general chat, or extract from somewhere if we had auth middleware
+            context_data=context_data,
+            module=role,
             db=db,
-            user_id="public_simulation" # Placeholder until Auth allows explicit user mapping
+            user_id=user_id,
         )
         
         return ChatMessagesResponse(
             reply=result.get("reply", "No reply."),
             model="agi-gemini-2.5-flash",
-            actions=result.get("actions", [])
+            actions=result.get("actions", []),
+            user_profile={"name": user_name, "role": role},
         )
 
     except Exception as e:
@@ -148,6 +380,126 @@ async def chat_messages(body: ChatMessagesRequest, db: Session = Depends(get_db)
                  actions=[]
              )
         raise HTTPException(status_code=500, detail=f"AI chat failed: {e}")
+
+
+# ── Dedicated personalized chat endpoint (simple Gemini with full user context) ──
+class PersonalizedChatRequest(BaseModel):
+    message: str
+    history: list[Message] | None = None
+
+@router.post("/personalized")
+async def personalized_chat(
+    body: PersonalizedChatRequest,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    """Full-personalized chat: extracts user profile from JWT and feeds it as system context to Gemini."""
+    msg = (body.message or "").strip()
+    if not msg:
+        raise HTTPException(status_code=400, detail="message is required")
+
+    user_ctx = _extract_user_from_token(authorization, db)
+    system_prompt = _build_personalized_system_prompt(user_ctx)
+
+    # Build conversation
+    history_parts = []
+    if body.history:
+        for m in body.history[-10:]:  # Keep last 10 messages for context
+            history_parts.append(f"{m.role}: {m.content}")
+    history_str = "\n".join(history_parts)
+
+    full_prompt = f"""{system_prompt}
+
+CONVERSATION HISTORY:
+{history_str}
+
+USER MESSAGE: {msg}
+
+Respond in a warm, personalized manner using the user's real data above. Address them by name."""
+
+    try:
+        model = _get_client()
+        result = model.generate_content(full_prompt)
+        text = (result.text or "").strip() if result else "(No response)"
+        return {
+            "reply": text,
+            "model": "gemini-2.5-flash",
+            "user_profile": {"name": user_ctx.get("name"), "role": user_ctx.get("role")},
+        }
+    except Exception as e:
+        error_msg = str(e)
+        if "403" in error_msg:
+            return {"reply": f"Simulation: Hello {user_ctx.get('name', 'User')}! I'd love to help.", "model": "simulated-fallback"}
+        raise HTTPException(status_code=500, detail=f"Personalized chat failed: {e}")
+
+
+# ── Parent AI endpoint (no auth — uses hardcoded child lookup) ──
+@router.post("/parent/chat")
+async def parent_chat(
+    body: PersonalizedChatRequest,
+    db: Session = Depends(get_db),
+):
+    """Parent AI assistant — looks up child (Aarav Kumar) data and provides parent-focused responses."""
+    msg = (body.message or "").strip()
+    if not msg:
+        raise HTTPException(status_code=400, detail="message is required")
+
+    # Look up the child's data (Aarav Kumar for the parent portal)
+    child = db.query(StudentDB).filter(StudentDB.first_name == "Aarav").first()
+    child_ctx = {"role": "parent", "name": "Radhika Kumar"}
+    
+    if child:
+        enrollments = db.query(EnrollmentDB).filter(EnrollmentDB.student_id == child.id).all()
+        course_ids = [e.course_id for e in enrollments]
+        courses = db.query(CourseDB).filter(CourseDB.id.in_(course_ids)).all() if course_ids else []
+        attendance = db.query(AttendanceDB).filter(AttendanceDB.student_id == child.id).all()
+        total_att = len(attendance)
+        present = sum(1 for a in attendance if a.status == "Present")
+        att_rate = round((present / total_att) * 100, 1) if total_att > 0 else 0
+        
+        grades = []
+        for e in enrollments:
+            c = next((c for c in courses if c.id == e.course_id), None)
+            if c and e.grade:
+                grades.append(f"{c.name}: {e.grade}")
+
+        child_ctx.update({
+            "child_name": f"{child.first_name} {child.last_name}",
+            "child_major": child.major or "Undeclared",
+            "child_gpa": child.year,
+            "child_attendance": att_rate,
+            "child_courses": ", ".join([c.name for c in courses]) or "None",
+            "child_grades": ", ".join(grades) or "No grades yet",
+        })
+    else:
+        child_ctx.update({"child_name": "Aarav Kumar", "child_attendance": "N/A", "child_courses": "N/A"})
+
+    system_prompt = _build_personalized_system_prompt(child_ctx)
+
+    history_parts = []
+    if body.history:
+        for m in body.history[-10:]:
+            history_parts.append(f"{m.role}: {m.content}")
+    
+    full_prompt = f"""{system_prompt}
+
+CONVERSATION HISTORY:
+{chr(10).join(history_parts)}
+
+PARENT'S MESSAGE: {msg}
+
+Respond warmly and personally. Address Radhika by name and reference Aarav's actual data."""
+
+    try:
+        model = _get_client()
+        result = model.generate_content(full_prompt)
+        text = (result.text or "").strip() if result else "(No response)"
+        return {"reply": text, "model": "gemini-2.5-flash", "child_profile": child_ctx}
+    except Exception as e:
+        error_msg = str(e)
+        if "403" in error_msg:
+            return {"reply": f"Hello Radhika! I'd love to help you with information about Aarav.", "model": "simulated-fallback"}
+        raise HTTPException(status_code=500, detail=f"Parent chat failed: {e}")
 
 
 # ---- Learning kit endpoint (multi-format output with images) ----
