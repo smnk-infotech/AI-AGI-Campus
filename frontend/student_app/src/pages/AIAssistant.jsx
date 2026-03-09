@@ -31,35 +31,139 @@ function Icon({ name }) {
   }
 }
 
-function Message({ m, onCopy, onRegenerate }) {
+function Message({ m, onCopy, onRegenerate, onExecuteAction, actionBusyKey }) {
   const isUser = m.role === 'user'
   return (
-    <div className={`row ${isUser ? 'user' : 'assistant'}`}>
-      <div className="avatar">{isUser ? 'YOU' : 'AI'}</div>
-      <div className="content">
-        {/* Agent Actions Display */}
-        {m.actions && m.actions.length > 0 && (
-          <div className="agent-actions" style={{ marginBottom: 8, fontSize: '0.85rem', color: '#888', borderLeft: '2px solid #3b82f6', paddingLeft: 8 }}>
-            {m.actions.map((act, i) => (
-              <div key={i} style={{ marginBottom: 4 }}>
-                <strong>⚡ Used Tool:</strong> <code>{act.tool}</code>
-                <br />
-                <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>Result: {act.result?.slice(0, 100)}...</span>
+    <>
+      <style>{`
+        .msg-bubble {
+          display: flex;
+          justify-content: ${isUser ? 'flex-end' : 'flex-start'};
+          margin-bottom: 12px;
+          animation: fadeInMsg 0.3s ease-out;
+        }
+        @keyframes fadeInMsg {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .msg-content-wrapper {
+          max-width: 85%;
+          display: flex;
+          gap: 12px;
+          align-items: flex-end;
+        }
+        .msg-text {
+          padding: 12px 16px;
+          border-radius: 12px;
+          line-height: 1.5;
+          word-wrap: break-word;
+          font-size: 0.95rem;
+          background: ${isUser ? '#10a37f' : '#444654'};
+          color: ${isUser ? '#fff' : '#ececf1'};
+        }
+        .msg-actions {
+          margin-bottom: 12px;
+          padding-bottom: 12px;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .msg-action-btn {
+          display: inline-block;
+          margin-top: 6px;
+          padding: 6px 12px;
+          font-size: 0.75rem;
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          border-radius: 6px;
+          color: ${isUser ? '#fff' : '#10a37f'};
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .msg-action-btn:hover:not(:disabled) {
+          background: rgba(255,255,255,0.2);
+        }
+        .msg-action-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .msg-btn-group {
+          display: flex;
+          gap: 8px;
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+        .msg-bubble:hover .msg-btn-group {
+          opacity: 0.7;
+        }
+        .msg-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 4px;
+          color: #bbb;
+          transition: color 0.2s;
+        }
+        .msg-btn:hover {
+          color: #10a37f;
+        }
+        .markdown-content a { color: #10a37f; }
+        .markdown-content code { 
+          background: rgba(0,0,0,0.3); 
+          padding: 2px 6px; 
+          border-radius: 4px; 
+          font-family: 'Monaco', 'Courier New', monospace;
+          font-size: 0.9em;
+        }
+        .markdown-content pre { 
+          background: #222425; 
+          padding: 12px; 
+          border-radius: 8px; 
+          overflow: auto; 
+          font-size: 0.85rem; 
+          margin: 8px 0;
+          border-left: 3px solid #10a37f;
+        }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+          margin: 12px 0 8px;
+          font-weight: 700;
+        }
+        .markdown-content p { margin: 8px 0; }
+        .markdown-content ul, .markdown-content ol { margin: 8px 0; padding-left: 20px; }
+        .markdown-content li { margin: 4px 0; }
+      `}</style>
+      <div className="msg-bubble">
+        <div className="msg-content-wrapper">
+          <div className="msg-text">
+            {m.actions && m.actions.length > 0 && (
+              <div className="msg-actions">
+                {m.actions.map((act, i) => (
+                  <div key={i} style={{ fontSize: '0.85rem', marginBottom: '6px' }}>
+                    <div>⚡ <strong>{act.tool}</strong> <span style={{ opacity: 0.7 }}>({act.access_mode})</span></div>
+                    <button
+                      className="msg-action-btn"
+                      disabled={actionBusyKey === `${act.tool}-${i}`}
+                      onClick={() => onExecuteAction?.(act, i)}
+                    >
+                      {actionBusyKey === `${act.tool}-${i}` ? 'Executing…' : 'Execute'}
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+            <div className="markdown-content">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {m.content}
+              </ReactMarkdown>
+            </div>
           </div>
-        )}
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
-      </div>
-      {!isUser && (
-        <div className="actions">
-          <button className="icon-btn" title="Copy" onClick={() => onCopy(m.content)}><Icon name="copy" /></button>
-          <button className="icon-btn" title="Regenerate" onClick={() => onRegenerate()}><Icon name="refresh" /></button>
-          <button className="icon-btn" title="Helpful"><Icon name="thumbs-up" /></button>
-          <button className="icon-btn" title="Not helpful"><Icon name="thumbs-down" /></button>
+          {!isUser && (
+            <div className="msg-btn-group">
+              <button className="msg-btn" title="Copy" onClick={() => onCopy(m.content)}><Icon name="copy" /></button>
+              <button className="msg-btn" title="Regenerate" onClick={() => onRegenerate()}><Icon name="refresh" /></button>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </>
   )
 }
 
@@ -82,6 +186,7 @@ export default function AIAssistant() {
   const [kitError, setKitError] = useState('')
   const [kitTab, setKitTab] = useState('summary')
   const [studentProfile, setStudentProfile] = useState(null)
+  const [actionBusyKey, setActionBusyKey] = useState('')
   const endRef = useRef(null)
 
   // ── Fetch student profile on mount for personalized greeting ──
@@ -193,6 +298,34 @@ export default function AIAssistant() {
   }
 
   function copyText(text) { navigator.clipboard?.writeText(text) }
+
+  async function executeAction(action, index) {
+    const token = localStorage.getItem('student_token')
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) headers.Authorization = `Bearer ${token}`
+
+    const busyKey = `${action.tool}-${index}`
+    setActionBusyKey(busyKey)
+    try {
+      const res = await fetch(`${API_BASE}/api/ai/actions/execute`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ tool: action.tool, args: action.args || {} }),
+      })
+      if (!res.ok) throw new Error(`Action failed: ${res.status}`)
+      const data = await res.json()
+      const resultMsg = {
+        role: 'assistant',
+        content: `Action executed: **${data.tool}**\n\nResult:\n\n\`\`\`\n${typeof data.result === 'string' ? data.result : JSON.stringify(data.result, null, 2)}\n\`\`\``,
+      }
+      updateActive(c => ({ ...c, messages: [...c.messages, resultMsg] }))
+    } catch (e) {
+      setError(e?.message || 'Failed to execute action')
+    } finally {
+      setActionBusyKey('')
+    }
+  }
+
   function exportChat() {
     const blob = new Blob([JSON.stringify(active, null, 2)], { type: 'application/json' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${active.title || 'chat'}.json`; a.click()
@@ -252,14 +385,21 @@ export default function AIAssistant() {
               </div>
             </header>
 
-            <div className="messages">
+            <div className="messages" style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '0px' }}>
               {active?.messages?.map((m, i) => (
-                <Message key={i} m={m} onCopy={copyText} onRegenerate={regenerate} />
+                <Message key={i} m={m} onCopy={copyText} onRegenerate={regenerate} onExecuteAction={executeAction} actionBusyKey={actionBusyKey} />
               ))}
               {loading && (
-                <div className="row assistant">
-                  <div className="avatar">AI</div>
-                  <div className="content muted">Assistant is typing…</div>
+                <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '16px' }}>
+                  <div style={{
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    background: '#444654',
+                    color: '#ececf1',
+                    fontSize: '0.95rem'
+                  }}>
+                    <span style={{ animation: 'pulse 1.5s infinite' }}>✨ Thinking…</span>
+                  </div>
                 </div>
               )}
               <div ref={endRef} />
@@ -347,22 +487,54 @@ export default function AIAssistant() {
               </div>
             )}
 
-            <div className="composer">
-              <div className="box">
+            <div style={{ borderTop: '1px solid #444654', padding: '16px 20px 20px', background: 'linear-gradient(to top, rgba(255,255,255,0.02), transparent)' }}>
+              <style>{`
+                @keyframes pulse {
+                  0%, 100% { opacity: 1; }
+                  50% { opacity: 0.5; }
+                }
+              `}</style>
+              <div style={{ display: 'flex', gap: '12px' }}>
                 <textarea
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={onKeyDown}
-                  rows={1}
-                  placeholder="Message AI Assistant…"
+                  rows={Math.min(4, Math.max(1, input.split('\n').length))}
+                  placeholder="Ask me anything… (Shift+Enter for new line)"
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid #444654',
+                    background: '#222425',
+                    color: '#ececf1',
+                    fontSize: '0.95rem',
+                    fontFamily: 'inherit',
+                    resize: 'none',
+                    maxHeight: '200px'
+                  }}
                 />
-                {!loading ? (
-                  <button className="send" disabled={!input.trim()} onClick={sendMessage}><Icon name="send" /></button>
-                ) : (
-                  <button className="btn" onClick={stop}>Stop</button>
-                )}
+                <button
+                  disabled={!input.trim() || loading}
+                  onClick={loading ? stop : sendMessage}
+                  style={{
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: input.trim() && !loading ? '#10a37f' : '#555555',
+                    color: '#fff',
+                    cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {loading ? 'Stop' : 'Send'}
+                </button>
               </div>
-              <div className="muted" style={{ padding: '8px 6px 0', fontSize: 12 }}>Shift+Enter for newline • Messages may be reviewed for quality</div>
+              <div style={{ padding: '8px 6px 0', fontSize: '0.75rem', color: '#999', opacity: 0.7 }}>
+                Shift+Enter for newline • Your learning data is personalized
+              </div>
             </div>
           </section>
         </div>

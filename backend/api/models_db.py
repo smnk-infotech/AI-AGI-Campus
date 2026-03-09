@@ -41,6 +41,9 @@ class AssignmentDB(Base):
     due_date = Column(String) # Store as ISO string for simplicity in SQLite
     description = Column(String, nullable=True)
     total_points = Column(Integer, default=100)
+    rubric_criteria = Column(String, nullable=True) # JSON string: [{"name": "Clarity", "points": 20, "description": "..."}, ...]
+    point_allocations = Column(String, nullable=True) # JSON string: {"participation": 10, "submission": 60, "quality": 30}
+    grading_scale = Column(String, nullable=True) # JSON string: {"A": 90, "B": 80, "C": 70, "D": 60, "F": 0}
 
 class CourseDB(Base):
     __tablename__ = "courses"

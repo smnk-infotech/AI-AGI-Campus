@@ -154,6 +154,22 @@ class FacultyAPIService {
     return response.json()
   }
 
+  async executeAIAction(tool, args = {}) {
+    if (!this.token) throw new Error('No token found')
+
+    const response = await fetch(`${API_BASE}/api/ai/actions/execute`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.token}`,
+      },
+      body: JSON.stringify({ tool, args }),
+    })
+
+    if (!response.ok) throw new Error(`Failed to execute action: ${response.status}`)
+    return response.json()
+  }
+
   // ================== UTILITY ==================
   logout() {
     this.token = null

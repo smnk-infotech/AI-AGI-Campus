@@ -69,6 +69,7 @@ export default function AGIController() {
   const [input, setInput] = useState('')
   const [bcMsg, setBcMsg] = useState('')
   const [bcTarget, setBcTarget] = useState('all')
+  const [actionBusyKey, setActionBusyKey] = useState('')
   const endRef = useRef(null)
 
   /* ── data fetch ── */
@@ -110,6 +111,19 @@ export default function AGIController() {
       setMsgs(p => [...p, { role: 'ai', text: `**Alert Broadcasted** to **${bcTarget}**: ${bcMsg}` }])
       setBcMsg(''); setTimeout(refresh, 500)
     } catch (e) { console.error(e) }
+  }
+
+  async function executeAction(action, index) {
+    const key = `${action.tool}-${index}`
+    setActionBusyKey(key)
+    try {
+      const d = await post('/api/ai/actions/execute', { tool: action.tool, args: action.args || {} })
+      setMsgs(p => [...p, { role: 'ai', text: `**Action Executed:** ${d.tool}\n\n${typeof d.result === 'string' ? d.result : JSON.stringify(d.result, null, 2)}` }])
+      setTimeout(refresh, 500)
+    } catch (e) {
+      setMsgs(p => [...p, { role: 'ai', text: `**Action Error:** ${e.message}` }])
+    }
+    setActionBusyKey('')
   }
 
   /* ── quick commands ── */
@@ -173,27 +187,107 @@ export default function AGIController() {
             <button key={i} className="agi-qbtn" onClick={() => { setInput(q.c); setTab('command') }}><Ic name="zap" size={12} /> {q.l}</button>
           ))}</div>
 
-          <div className="agi-chat">
+          <div className="agi-chat" style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', background: '#1d1e1e' }}>
+            <style>{`
+              .admin-msg-bubble {
+                display: flex;
+                justify-content: flex-start;
+                animation: fadeInMsg 0.3s ease-out;
+              }
+              .admin-msg-bubble.user {
+                justify-content: flex-end;
+              }
+              @keyframes fadeInMsg {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+              .admin-msg-text {
+                padding: 12px 16px;
+                border-radius: 12px;
+                max-width: 85%;
+                line-height: 1.5;
+                font-size: 0.95rem;
+              }
+              .admin-msg-text.user {
+                background: #10a37f;
+                color: #fff;
+              }
+              .admin-msg-text.ai {
+                background: #444654;
+                color: #ececf1;
+              }
+            `}</style>
             {msgs.map((m, i) => (
-              <div key={i} className={`agi-m ${m.role}`}>
-                <div className="agi-m-av">{m.role === 'user' ? 'ADM' : 'AGI'}</div>
-                <div className="agi-m-body">
-                  {m.actions?.length > 0 && (
-                    <div className="agi-m-acts">{m.actions.map((a, j) => (
-                      <div key={j} className="agi-act"><Ic name="zap" size={12} /> <strong>{a.tool}</strong> <span className="agi-act-r">{String(a.result).slice(0, 120)}</span></div>
-                    ))}</div>
+              <div key={i} className={`admin-msg-bubble ${m.role}`}>
+                <div className={`admin-msg-text ${m.role}`}>
+                  {m.actions && m.actions.length > 0 && (
+                    <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.1)', fontSize: '0.85rem' }}>
+                      {m.actions.map((a, j) => (
+                        <div key={j} style={{ marginBottom: '6px' }}>
+                          <div>⚡ <strong>{a.tool}</strong> ({a.access_mode})</div>
+                          <button
+                            className="agi-qbtn"
+                            style={{ padding: '4px 10px', fontSize: '0.75rem', marginTop: '4px' }}
+                            disabled={actionBusyKey === `${a.tool}-${j}`}
+                            onClick={() => executeAction(a, j)}
+                          >
+                            {actionBusyKey === `${a.tool}-${j}` ? 'Executing…' : 'Execute'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                   <ReactMarkdown>{m.text}</ReactMarkdown>
                 </div>
               </div>
             ))}
-            {busy && <div className="agi-m ai"><div className="agi-m-av">AGI</div><div className="agi-m-body agi-typing">Reasoning<span className="dots" /></div></div>}
+            {busy && <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <div style={{ padding: '10px 16px', background: '#444654', color: '#ececf1', borderRadius: '12px', fontSize: '0.95rem' }}>
+                ✨ Reasoning…
+              </div>
+            </div>}
             <div ref={endRef} />
           </div>
 
-          <div className="agi-irow">
-            <input className="agi-inp" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendCmd()} placeholder="Enter AGI command... (e.g., 'Analyze campus performance')" />
-            <button className="agi-sendbtn" onClick={sendCmd} disabled={busy || !input.trim()}><Ic name="send" size={16} /> Execute</button>
+          <div style={{ borderTop: '1px solid #444654', padding: '16px 20px 20px', background: 'linear-gradient(to top, rgba(255,255,255,0.02), transparent)' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendCmd())}
+                rows={Math.min(3, Math.max(1, input.split('\n').length))}
+                placeholder="Enter AGI command… (Shift+Enter for new line)"
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #444654',
+                  background: '#222425',
+                  color: '#ececf1',
+                  fontSize: '0.95rem',
+                  fontFamily: 'inherit',
+                  resize: 'none',
+                  maxHeight: '150px'
+                }}
+              />
+              <button
+                onClick={sendCmd}
+                disabled={busy || !input.trim()}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: input.trim() && !busy ? '#10a37f' : '#555555',
+                  color: '#fff',
+                  cursor: input.trim() && !busy ? 'pointer' : 'not-allowed',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {busy ? 'Executing…' : 'Execute'}
+              </button>
+            </div>
           </div>
 
           <div className="agi-bc">

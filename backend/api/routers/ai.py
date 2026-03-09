@@ -321,6 +321,19 @@ class ChatMessagesResponse(BaseModel):
     user_profile: dict | None = None  # Echo back the detected user profile
 
 
+class ExecuteActionRequest(BaseModel):
+    tool: str
+    args: dict | None = None
+
+
+class ExecuteActionResponse(BaseModel):
+    ok: bool
+    tool: str
+    access_mode: str
+    args: dict | None = None
+    result: str | dict | list
+
+
 from fastapi import Header
 
 @router.post("/messages", response_model=ChatMessagesResponse)
@@ -380,6 +393,32 @@ async def chat_messages(
                  actions=[]
              )
         raise HTTPException(status_code=500, detail=f"AI chat failed: {e}")
+
+
+@router.post("/actions/execute", response_model=ExecuteActionResponse)
+async def execute_ai_action(
+    body: ExecuteActionRequest,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    """Execute a single AGI tool action from frontend action cards with full RBAC checks."""
+    tool = (body.tool or "").strip()
+    if not tool:
+        raise HTTPException(status_code=400, detail="tool is required")
+
+    user_ctx = _extract_user_from_token(authorization, db)
+    role = user_ctx.get("role", "guest")
+    if role == "guest":
+        raise HTTPException(status_code=401, detail="Authentication required for executing actions")
+
+    executed = agi_brain.execute_action(
+        tool=tool,
+        tool_args=body.args or {},
+        module=role,
+        db=db,
+        user_context=user_ctx,
+    )
+    return ExecuteActionResponse(**executed)
 
 
 # ── Dedicated personalized chat endpoint (simple Gemini with full user context) ──
