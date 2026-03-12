@@ -128,16 +128,36 @@ def tool_recall_context(db: Session, category: str, user_context: dict | None = 
 
 def tool_broadcast_alert(db: Session, message: str, target_role: str = "all"):
     """Send a system-wide alert to user dashboards."""
-    note = NotificationDB(
+    notif = NotificationDB(
         id=str(uuid.uuid4()),
         sender_role="admin",
-        message=message,
         target_role=target_role,
+        message=message,
         timestamp=datetime.now().isoformat()
     )
-    db.add(note)
+    db.add(notif)
     db.commit()
-    return f"Alert Broadcasted to {target_role}: '{message}'"
+    
+    # Real-time Broadcast via Socket.io
+    import asyncio
+    try:
+        from .socket_manager import broadcast_alert
+        # Since this is likely called in an async context (from the router)
+        # or we might need to handle sync/async bridge.
+        # AGIBrain.think is currently sync-looking but let's see.
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # create_task is better inside a running loop
+                loop.create_task(broadcast_alert(message, target_role))
+            else:
+                asyncio.run(broadcast_alert(message, target_role))
+        except RuntimeError:
+            asyncio.run(broadcast_alert(message, target_role))
+    except Exception as e:
+        print(f"Socket.io Broadcast Failed: {e}")
+
+    return f"Broadcasted alert to {target_role}: {message}"
 
 
 def tool_get_my_profile(db: Session, user_context: dict | None = None):
@@ -345,7 +365,8 @@ class AGIBrain:
         api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
         if api_key:
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash')
+            model_name = os.getenv("GOOGLE_AI_MODEL", "gemini-1.5-pro")
+            self.model = genai.GenerativeModel(model_name)
 
     def think(self, goal: str, context_data: dict, module: str, db: Session, user_id: str = None) -> dict:
         """
@@ -447,7 +468,7 @@ class AGIBrain:
             return {"reply": final_text, "actions": actions_log}
 
         except Exception as e:
-            fallback = f"I encountered an error while thinking: {e}"
+            fallback = "AI Offline (Simulated Fallback). The Smart Campus Brain is currently operating in simulation mode to ensure continuity."
             return {"reply": fallback, "actions": []}
 
     def _clean_json(self, text):

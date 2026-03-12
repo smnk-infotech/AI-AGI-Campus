@@ -10,6 +10,7 @@ import Wellbeing from './pages/Wellbeing'
 import AIAssistant from './pages/AIAssistant'
 import Login from './pages/Login'
 import Attendance from './pages/Attendance'
+import NotificationSystem from './components/NotificationSystem'
 import './styles.css'
 
 const links = [
@@ -75,6 +76,7 @@ export default function App() {
 
   return (
     <div className="app-layout">
+      <NotificationSystem role="student" />
       {/* Sidebar */}
       <aside className={`app-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">

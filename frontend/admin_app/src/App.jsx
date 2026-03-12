@@ -9,6 +9,7 @@ import Operations from './pages/Operations'
 import Reports from './pages/Reports'
 import AGIController from './pages/AGIController'
 import Login from './pages/Login'
+import NotificationSystem from './components/NotificationSystem'
 
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -63,6 +64,7 @@ export default function App() {
 
   return (
     <div className="app-container">
+      <NotificationSystem role="admin" />
       <div className="central-container">
         {/* Header Card */}
         <header className="header-card">

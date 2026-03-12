@@ -47,6 +47,9 @@ origins = [
     # Admin app
     "http://127.0.0.1:5177",
     "http://localhost:5177",
+    # Firebase hosted apps (production)
+    "https://ai-study-bc927.web.app",
+    "https://ai-study-bc927.firebaseapp.com",
 ]
 
 app.add_middleware(
@@ -74,3 +77,10 @@ app.include_router(students_router)
 app.include_router(faculty_router)
 app.include_router(admin_router)
 app.include_router(ai_router)
+
+# Mount Socket.io
+from .socket_manager import sio
+import socketio
+sio_asgi_app = socketio.ASGIApp(sio, other_asgi_app=app)
+# We can still use socket_app for uvicorn, which routes everything
+socket_app = sio_asgi_app

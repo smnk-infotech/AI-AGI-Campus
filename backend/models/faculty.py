@@ -3,7 +3,7 @@ from typing import Optional, List
 import uuid
 
 class Faculty(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     first_name: str
     last_name: str
     email: str
@@ -12,6 +12,7 @@ class Faculty(BaseModel):
     office_location: Optional[str] = None
 
     model_config = ConfigDict(
+        from_attributes=True,
         populate_by_name=True,
         json_schema_extra={
             "example": {

@@ -6,7 +6,7 @@ echo     STARTING AI + AGI CAMPUS SYSTEM
 echo ===================================================
 
 echo [1/5] Starting Backend Server (Port 8001)...
-start "Backend API" cmd /k "call backend\api\.venv\Scripts\activate && set PYTHONPATH=. && python -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8001 --reload"
+start "Backend API" cmd /k "call backend\api\.venv\Scripts\activate && set PYTHONPATH=. && python -m uvicorn backend.api.main:socket_app --host 0.0.0.0 --port 8001 --reload"
 
 echo [2/5] Starting Gateway Portal (Port 5173)...
 start "Gateway Portal" cmd /k "cd frontend\homepage && npm run dev -- --host 0.0.0.0"

@@ -230,6 +230,22 @@ def agi_broadcast(body: BroadcastRequest, db: Session = Depends(get_db)):
     )
     db.add(note)
     db.commit()
+
+    # Real-time Broadcast
+    import asyncio
+    try:
+        from ..socket_manager import broadcast_alert
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.create_task(broadcast_alert(body.message, body.target_role))
+            else:
+                asyncio.run(broadcast_alert(body.message, body.target_role))
+        except Exception:
+            asyncio.run(broadcast_alert(body.message, body.target_role))
+    except Exception as e:
+        print(f"Broadcast error: {e}")
+
     return {"success": True, "message": body.message, "target": body.target_role}
 
 

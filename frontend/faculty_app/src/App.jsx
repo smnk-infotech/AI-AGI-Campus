@@ -9,6 +9,7 @@ import Advising from './pages/Advising'
 import Research from './pages/Research'
 import Assignments from './pages/Assignments'
 import Login from './pages/Login'
+import NotificationSystem from './components/NotificationSystem'
 
 const links = [
   { path: '/', label: 'Overview', icon: LayoutDashboard },
@@ -68,6 +69,7 @@ export default function App() {
 
   return (
     <div className="app-container">
+      <NotificationSystem role="faculty" />
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-header">

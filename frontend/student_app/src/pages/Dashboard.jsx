@@ -10,12 +10,12 @@ export default function Dashboard({ student }) {
 
   useEffect(() => {
     if (!student?.id) return
-    
+
     const fetchDashboard = async () => {
       try {
         const data = await api.getDashboard(student.id)
         setStats(data)
-        
+
         // Mock data - replace with real API calls
         setDeadlines([
           { id: 1, title: 'CS101 Assignment 3', course: 'Intro to CS', dueDate: 'Mar 5', overdue: false },
@@ -51,7 +51,8 @@ export default function Dashboard({ student }) {
   }
 
   // Calculate attendance percentage for the ring
-  const attendancePercentage = 92
+  const attStat = stats?.stats?.find(s => s.label === 'Attendance')
+  const attendancePercentage = attStat ? parseInt(attStat.value) : 100
 
   const renderAttendanceRing = () => {
     const radius = 90
@@ -90,34 +91,16 @@ export default function Dashboard({ student }) {
     )
   }
 
-  if (loading) {
-    return (
-      <div className="grid grid-12">
-        <div className="campus-card">Loading dashboard...</div>
-      </div>
-    )
-  }
-
   return (
     <div className="container">
       {/* Stats Overview */}
       <div className="stats-grid">
-        <div className="stat-card interactive">
-          <div className="stat-value">3</div>
-          <div className="stat-label">Courses Enrolled</div>
-        </div>
-        <div className="stat-card interactive">
-          <div className="stat-value">2</div>
-          <div className="stat-label">Pending Tasks</div>
-        </div>
-        <div className="stat-card interactive">
-          <div className="stat-value">92%</div>
-          <div className="stat-label">Attendance</div>
-        </div>
-        <div className="stat-card interactive">
-          <div className="stat-value">3.8</div>
-          <div className="stat-label">GPA</div>
-        </div>
+        {stats?.stats?.map(stat => (
+          <div key={stat.id} className="stat-card interactive">
+            <div className="stat-value">{stat.value}</div>
+            <div className="stat-label">{stat.label}</div>
+          </div>
+        ))}
       </div>
 
       {/* Main Content Grid */}

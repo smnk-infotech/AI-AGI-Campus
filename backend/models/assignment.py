@@ -9,7 +9,7 @@ class RubricCriterion(BaseModel):
     description: Optional[str] = None
 
 class Assignment(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     course_id: str # Foreign key to Course model
     due_date: datetime

@@ -15,7 +15,17 @@ class AttendanceCreate(BaseModel):
     status: str = "Present"
     method: str = "FaceRec"
 
-@router.get("/", response_model=List[dict])
+class AttendanceResponse(BaseModel):
+    id: str
+    student_id: str
+    date: str
+    status: str
+    method: str
+
+    class Config:
+        from_attributes = True
+
+@router.get("/", response_model=List[AttendanceResponse])
 def list_attendance(db: Session = Depends(get_db)):
     return db.query(AttendanceDB).all()
 
